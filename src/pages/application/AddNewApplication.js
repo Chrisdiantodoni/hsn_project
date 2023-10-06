@@ -87,7 +87,7 @@ export default function AddNewApplication() {
   const [endDate, setEndDate] = useState(null);
   const [selectedImages, setSelectedImages] = useState([]);
   const [listTukang, setListTukang] = useState([]);
-  const [uploadImage, setUploadImage] = useState([]);
+  const [allStock, setAllStock] = useState([]);
   const handleImageChange = (event) => {
     const files = event.target.files;
     setSelectedImages((prev) => [...prev, ...files]);
@@ -95,7 +95,6 @@ export default function AddNewApplication() {
   const handleSelectedItems = (selectedItems) => {
     setSelectedCards((prev) => [...prev, ...selectedItems]);
   };
-  console.log(selectedImages);
 
   const handleDelete = (id) => {
     const updatedSelectedCards = selectedCards.filter((item) => item.id !== id);
@@ -219,6 +218,14 @@ export default function AddNewApplication() {
     }
   };
 
+  const handleUpahChange = (id, newUpah) => {
+    if (!isNaN(newUpah)) {
+      setListTukang((prevCards) => prevCards.map((card) => (card.id === id ? { ...card, upah: newUpah } : card)));
+    } else {
+      setListTukang((prevCards) => prevCards.map((card) => (card.id === id ? { ...card, upah: '' } : card)));
+    }
+  };
+
   const handleAddNewProject = async (e) => {
     e.preventDefault();
     const totalHarga = parseInt(totalHargaJob) + totalHargaStock;
@@ -227,6 +234,15 @@ export default function AddNewApplication() {
     const tukangIdArray = listTukang.map((item) => {
       return item.id;
     });
+    let approvalType = 'Owner';
+    for (const selectedItem of selectedCards) {
+      const stockStatus = checkingStock(selectedItem);
+
+      if (stockStatus === 'Beli') {
+        approvalType = 'Pembelian';
+        break;
+      }
+    }
     const tukangId = tukangIdArray.join(',');
     const formData = new FormData();
     formData.append('nama_project', project);
@@ -235,19 +251,26 @@ export default function AddNewApplication() {
     formData.append('start', startDate);
     formData.append('end', endDate);
     formData.append('status', 'Request');
+    formData.append('tukangId', tukangId);
     formData.append('type', selectKerjaan);
     formData.append('userId', id);
+    formData.append('approvalType', approvalType);
+    formData.append('Beli', 'Beli');
     formData.append('list_job', JSON.stringify(listJob));
     formData.append('list_stock', JSON.stringify(selectedCards));
     [...selectedImages].forEach((image) => {
       formData.append('list_gambar', image);
     });
-    formData.append('tukangId', tukangId);
+    formData.append('list_tukang', JSON.stringify(listTukang));
 
     for (var pair of formData.entries()) {
       console.log(pair[0] + ', ' + pair[1]);
     }
-    Axios.post('/project', formData)
+    Axios.post('/project', formData, {
+      headers: {
+        'Content-Type': 'multipart-form-data',
+      },
+    })
       .then((res) => {
         if (res) {
           toast.success('Project Berhasil Diajukan');
@@ -258,13 +281,48 @@ export default function AddNewApplication() {
         toast.error('Project Gagal Ditambahkan');
       });
   };
+  const getStock = async () => {
+    try {
+      const response = await Axios.get('/stock/allstock');
+      if (response.data.message === 'OK') {
+        const data = response?.data?.data;
+        setAllStock(data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getStock();
+  }, []);
+  const checkingStock = (item) => {
+    console.log({ item });
+    const listStock = allStock.find((find) => find.id === item.stockId);
+    if (listStock?.qty === item.qty || listStock?.qty > item.qty) {
+      return 'Stock masih ada';
+    } else if (listStock?.qty < item.qty) {
+      return 'Beli';
+    }
+    const listStock2 = allStock.find((find) => find.id === item.id);
+    if (listStock2?.qty === item.qty || listStock2?.qty > item.qty) {
+      return 'Stock masih ada';
+    } else if (!listStock2 || listStock2?.qty < item.qty) {
+      return 'Beli';
+    }
+  };
   return (
     <>
       <Helmet>
         <title> Dashboard | Minimal UI </title>
       </Helmet>
 
-      <Container disableGutters maxWidth="lg">
+      <Box
+        sx={{
+          py: 2,
+          px: 2,
+        }}
+      >
         <Grid container flexDirection={'row'} display={'flex'} spacing={2} alignContent={'center'}>
           <Grid container spacing={4} sx={{ alignItems: 'center', mb: 3 }} lg={12}>
             <Grid item lg={12} md={2}>
@@ -401,6 +459,7 @@ export default function AddNewApplication() {
                       <TableCell>#ID</TableCell>
                       <TableCell>Nama Tukang</TableCell>
                       <TableCell>No Hp</TableCell>
+                      <TableCell>Upah</TableCell>
                       <TableCell></TableCell>
                     </TableRow>
                   </TableHead>
@@ -410,6 +469,15 @@ export default function AddNewApplication() {
                         <TableCell>{item.id}</TableCell>
                         <TableCell>{item.nama_tukang}</TableCell>
                         <TableCell>{item.no_hp}</TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            type="number"
+                            value={item.upah}
+                            onChange={(e) => handleUpahChange(item.id, parseInt(e.target.value))}
+                          />
+                        </TableCell>
                         <TableCell>
                           <Button
                             variant="outlined"
@@ -451,6 +519,7 @@ export default function AddNewApplication() {
                       <TableCell>Qty</TableCell>
                       <TableCell>Harga</TableCell>
                       <TableCell>Total</TableCell>
+                      <TableCell>Keterangan</TableCell>
                       <TableCell></TableCell>
                     </TableRow>
                   </TableHead>
@@ -485,6 +554,7 @@ export default function AddNewApplication() {
                               : parseInt(item.qty) * parseInt(item.harga)
                           )}
                         </TableCell>
+                        <TableCell>{checkingStock(item)}</TableCell>
                         <TableCell>
                           <Button
                             variant="outlined"
@@ -759,7 +829,7 @@ export default function AddNewApplication() {
             selectedItems={listTukang}
           />
         </ModalComponent>
-      </Container>
+      </Box>
     </>
   );
 }

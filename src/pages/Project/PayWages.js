@@ -25,9 +25,8 @@ import {
 import { DatePicker } from '@mui/x-date-pickers';
 import { Link, useNavigate } from 'react-router-dom';
 import Search from '@mui/icons-material/Search';
-import { DateRangePicker } from 'rsuite';
 import 'rsuite/dist/rsuite.css';
-import { Button } from '../components';
+import { Button } from '../../components';
 import { Axios, currency } from 'src/utils';
 import { toast } from 'react-toastify';
 import moment from 'moment';
@@ -49,7 +48,7 @@ export default function ProjectPage() {
   const theme = useTheme();
   const [selectedOption, setSelectedOption] = useState('');
   const handleAddApplication = () => {
-    navigate('/dashboard/addapplication');
+    navigate('/Dashboard/AddApplication');
   };
 
   const [totalPages, setTotalPages] = useState(0);
@@ -110,7 +109,7 @@ export default function ProjectPage() {
         <title> Dashboard: Products | Minimal UI </title>
       </Helmet>
 
-      <Box>
+      <Container>
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
           <Pagination count={totalPages} page={currentPage} shape="rounded" color="color" onChange={handlePageChange} />
           <TableContainer component={Paper}>
@@ -207,7 +206,7 @@ export default function ProjectPage() {
             </Grid>
           </Grid>
         </Stack>
-      </Box>
+      </Container>
     </>
   );
 }

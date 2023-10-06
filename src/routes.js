@@ -12,7 +12,12 @@ import ProjectPage from './pages/ProjectPage';
 import Stock from './pages/Stock/Stock';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import AddNewApplication from './pages/application/AddNewApplication';
-
+import DetailProject from './pages/Project/DetailProject';
+import ProgressPage from './pages/Project/ProjectProgress';
+import DetailProjectProgressDaily from './pages/Project/DetailProgressProjectDaily';
+import DetailProjectProgressWeekly from './pages/Project/DetailProgressProjectWeekly';
+import DetailPayWages from './pages/Project/DetailWages';
+import PayWagesPage from './pages/Project/PayWages';
 import Page403 from './pages/Page403';
 import Tukang from './pages/Tukang/Tukang';
 
@@ -56,29 +61,39 @@ export default function Router() {
       children: [
         { element: <Navigate to="/dashboard/app" />, index: true },
         { path: 'app', element: <ProjectPage /> },
-        // { path: 'Application', element: <PengajuanLembur /> },
         {
-          path: 'AddApplication',
+          path: 'addapplication',
           element: <PrivateRoute element={<AddNewApplication />} allowedRoles={['Admin', 'Requester']} />,
         },
-        // {
-        //   path: 'Approver/:id',
-        //   element: (
-        //     <PrivateRoute path="/dashboard/Approver/:id" element={<Approver />} allowedRoles={['Admin', 'Approver']} />
-        //   ),
-        // },
-        // {
-        //   path: 'Requester/:id',
-        //   element: (
-        //     <PrivateRoute
-        //       path="/dashboard/Requester/:id"
-        //       element={<Requester />}
-        //       allowedRoles={['Admin', 'Requester']}
-        //     />
-        //   ),
-        // },
-        { path: 'Supplier', element: <Supplier /> },
-        { path: 'User', element: <UserList /> },
+        {
+          path: 'detailproject/:id',
+          element: <PrivateRoute element={<DetailProject />} allowedRoles={['Admin', 'Requester']} />,
+        },
+
+        { path: 'supplier', element: <Supplier /> },
+        {
+          path: 'progressproject',
+          element: <ProgressPage />,
+        },
+        {
+          path: 'projectprogress-daily/:id',
+          element: <PrivateRoute element={<DetailProjectProgressDaily />} allowedRoles={['Admin', 'Requester']} />,
+        },
+        {
+          path: 'projectprogress-weekly/:id',
+          element: <PrivateRoute element={<DetailProjectProgressWeekly />} allowedRoles={['Admin', 'Requester']} />,
+        },
+        {
+          path: 'paywages',
+          element: <PayWagesPage />,
+          children: [
+            {
+              path: 'paywages/:id',
+              element: <PrivateRoute element={<DetailPayWages />} allowedRoles={['Admin', 'Requester']} />,
+            },
+          ],
+        },
+        { path: 'user', element: <UserList /> },
         { path: 'stock', element: <Stock /> },
         { path: 'tukang', element: <Tukang /> },
       ],

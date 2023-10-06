@@ -35,16 +35,42 @@ import { useMyContext } from '../../../context/PageContext';
 
 const drawerWidth = 240;
 
+const openedMixin = (theme) => ({
+  width: drawerWidth,
+  backgroundColor: '#FFFFFF',
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
+  overflowX: 'hidden',
+});
+
+const closedMixin = (theme) => ({
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  backgroundColor: '#FFFFFF',
+  overflowX: 'hidden',
+  width: `calc(${theme.spacing(7)} + 1px)`,
+  [theme.breakpoints.up('sm')]: {
+    width: `calc(${theme.spacing(8)} + 1px)`,
+  },
+});
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
+  backgroundColor: '#ffffff',
+  boxShadow: '0 1px 1px 0 rgba(0,0,0,0.1)',
   transition: theme.transitions.create(['width', 'margin'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
   ...(open && {
     marginLeft: drawerWidth,
+    backgroundColor: '#ffffff',
+    boxShadow: '0 1px 1px 0 rgba(0,0,0,0.1)',
     width: `calc(100% - ${drawerWidth}px)`,
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
@@ -52,31 +78,28 @@ const AppBar = styled(MuiAppBar, {
     }),
   }),
 }));
-
 const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(({ theme, open }) => ({
-  '& .MuiDrawer-paper': {
-    position: 'relative',
-    whiteSpace: 'nowrap',
-    width: drawerWidth,
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-    boxSizing: 'border-box',
-    ...(!open && {
-      overflowX: 'hidden',
-      transition: theme.transitions.create('width', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-      }),
-      width: theme.spacing(7),
-      [theme.breakpoints.up('sm')]: {
-        width: theme.spacing(9),
-      },
-    }),
-  },
+  width: drawerWidth,
+  flexShrink: 0,
+  whiteSpace: 'nowrap',
+  boxSizing: 'border-box',
+  ...(open && {
+    ...openedMixin(theme),
+    '& .MuiDrawer-paper': openedMixin(theme),
+  }),
+  ...(!open && {
+    ...closedMixin(theme),
+    '& .MuiDrawer-paper': closedMixin(theme),
+  }),
 }));
 
+const DrawerHeader = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'flex-end',
+  padding: theme.spacing(0, 1),
+  ...theme.mixins.toolbar,
+}));
 const defaultTheme = createTheme();
 
 export default function Dashboard() {
@@ -95,17 +118,21 @@ export default function Dashboard() {
   useEffect(() => {
     const routeTitleMap = {
       '/dashboard/app': 'List Project',
-      '/dashboard/Application': 'Progress Project',
-      '/dashboard/Supplier': 'List Supplier',
+      '/dashboard/application': 'Progress Project',
+      '/dashboard/supplier': 'List Supplier',
       '/dashboard/stock': 'List Stock',
-      '/Dashboard/AddApplication': 'Pengajuan Project Baru',
-      '/dashboard/User': 'List User',
+      '/dashboard/addapplication': 'Pengajuan Project Baru',
+      '/dashboard/paywages': 'Pembayaran Upah',
+      '/dashboard/progressproject': 'Progress Project',
+      '/dashboard/addapplication': 'Pengajuan Project Baru',
+      '/dashboard/user': 'List User',
       '/dashboard/pembayaran': 'Pembayaran Upah',
-      '/dashboard/Tukang': 'List Tukang',
+      '/dashboard/tukang': 'List Tukang',
     };
-    routeTitleMap[`/dashboard/Requester/${id}`] = `Pengajuan Lembur dari #${id}`;
-    routeTitleMap[`/Dashboard/Approver/${id}`] = `Buat Pengajuan Lembur dari #${id}`;
-    routeTitleMap[`/dashboard/ListLembur/${id}`] = `Lembur dari #${id}`;
+    routeTitleMap[`/dashboard/detailproject/${id}`] = `Rincian Project #${id}`;
+    routeTitleMap[`/dashboard/paywages/${id}`] = `Rincian Project #${id}`;
+    routeTitleMap[`/dashboard/projectprogress-daily/${id}`] = `Rincian Project #${id}`;
+    routeTitleMap[`/dashboard/projectprogress-weekly/${id}`] = `Rincian Project #${id}`;
     const path = location.pathname;
     const newTitle = routeTitleMap[path] || 'Default Title';
     console.log(location);
@@ -126,7 +153,7 @@ export default function Dashboard() {
           <ListItemText primary="List Project" />
         </ListItemButton>
       </NavLink>
-      <NavLink to="/dashboard/Application" style={{ textDecoration: 'none', color: '#000' }}>
+      <NavLink to="/dashboard/progressproject" style={{ textDecoration: 'none', color: '#000' }}>
         <ListItemButton>
           <ListItemIcon>
             <PublishedWithChanges />
@@ -134,7 +161,7 @@ export default function Dashboard() {
           <ListItemText primary="Progress Project" />
         </ListItemButton>
       </NavLink>
-      <NavLink to="/dashboard/pembayaran" style={{ textDecoration: 'none', color: '#000' }}>
+      <NavLink to="/dashboard/paywages" style={{ textDecoration: 'none', color: '#000' }}>
         <ListItemButton>
           <ListItemIcon>
             <Paid />
@@ -150,7 +177,7 @@ export default function Dashboard() {
           <ListItemText primary="Absensi" />
         </ListItemButton>
       </NavLink> */}
-      <NavLink to="/dashboard/Tukang" style={{ textDecoration: 'none', color: '#000' }}>
+      <NavLink to="/dashboard/tukang" style={{ textDecoration: 'none', color: '#000' }}>
         <ListItemButton>
           <ListItemIcon>
             <Engineering />
@@ -158,7 +185,7 @@ export default function Dashboard() {
           <ListItemText primary="List Tukang" />
         </ListItemButton>
       </NavLink>
-      <NavLink to="/dashboard/Supplier" style={{ textDecoration: 'none', color: '#000' }}>
+      <NavLink to="/dashboard/supplier" style={{ textDecoration: 'none', color: '#000' }}>
         <ListItemButton>
           <ListItemIcon>
             <LocalShipping />
@@ -174,7 +201,7 @@ export default function Dashboard() {
           <ListItemText primary="List Stock" />
         </ListItemButton>
       </NavLink>
-      <NavLink to="/dashboard/User" style={{ textDecoration: 'none', color: '#000' }}>
+      <NavLink to="/dashboard/user" style={{ textDecoration: 'none', color: '#000' }}>
         <ListItemButton>
           <ListItemIcon>
             <AccountCircle />
@@ -235,7 +262,7 @@ export default function Dashboard() {
     <ThemeProvider theme={defaultTheme}>
       <Box sx={{ display: 'flex' }}>
         <CssBaseline />
-        <AppBar position="absolute" open={open} style={{ backgroundColor: '#bc251a' }}>
+        <AppBar position="fixed" open={open} style={{ backgroundColor: '#bc251a' }}>
           <Toolbar>
             <IconButton
               edge="start"
