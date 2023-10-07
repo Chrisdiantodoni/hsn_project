@@ -4,11 +4,9 @@ import { Link, useParams } from 'react-router-dom';
 // @mui
 import moment from 'moment';
 import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
-import { useTheme, styled } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import {
   Grid,
-  Container,
   Typography,
   Paper,
   TableRow,
@@ -20,9 +18,10 @@ import {
   Box,
   Divider,
 } from '@mui/material';
-import { DatePicker, TimePicker, MobileTimePicker } from '@mui/x-date-pickers';
+import { DatePicker, MobileTimePicker } from '@mui/x-date-pickers';
 import { Axios, currency } from 'src/utils';
 import { Button } from '@mui/material';
+import { toast } from 'react-toastify';
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -37,17 +36,16 @@ export default function DetailProjectProgress() {
   const [dataProject, setDataProject] = useState({});
   const [tukangTimes, setTukangTimes] = useState({});
   const [totalUpahPerTukang, setTotalUpahPerTukang] = useState({});
+  const [addedTimeEntries, setAddedTimeEntries] = useState({});
   const getProgress = async () => {
     try {
       const response = await Axios.get(`/progress/${id}`);
       if (response.data.message === 'OK') {
         setDataProject(response?.data?.data);
-
         const tukangTimesData = {};
         response?.data?.data?.list_tukangs?.forEach((tukang) => {
           tukangTimesData[tukang.id] = tukang.tukang_times;
         });
-
         setTukangTimes(tukangTimesData);
       }
     } catch (error) {
@@ -64,13 +62,19 @@ export default function DetailProjectProgress() {
       check_in: null,
       check_out: null,
       tanggal_masuk: null,
+      tukangId: tukangId,
     };
-
     setTukangTimes((prevTimes) => ({
       ...prevTimes,
       [tukangId]: [...(prevTimes[tukangId] || []), newTimeEntry],
     }));
+    setAddedTimeEntries((prevEntries) => ({
+      ...prevEntries,
+      [tukangId]: [...(prevEntries[tukangId] || []), newTimeEntry],
+    }));
   };
+
+  console.log(addedTimeEntries);
 
   const handleDeleteTimeEntry = (tukangId, index) => {
     const updatedTimes = [...tukangTimes[tukangId]];
@@ -90,6 +94,10 @@ export default function DetailProjectProgress() {
     };
 
     setTukangTimes((prevTimes) => ({
+      ...prevTimes,
+      [tukangId]: updatedTimes,
+    }));
+    setAddedTimeEntries((prevTimes) => ({
       ...prevTimes,
       [tukangId]: updatedTimes,
     }));
@@ -146,6 +154,61 @@ export default function DetailProjectProgress() {
 
     return totalUpahForAllTukangs;
   };
+  const handleImageUpload = (event) => {
+    const files = event.target.files;
+
+    if (files.length > 0) {
+      const newImages = [...uploadedImages];
+
+      for (let i = 0; i < files.length; i++) {
+        newImages.push(files[i]);
+      }
+
+      setUploadedImages(newImages);
+    }
+  };
+  const handleDeleteImage = (indexToDelete) => {
+    const newImages = uploadedImages.filter((_, index) => index !== indexToDelete);
+    setUploadedImages(newImages);
+  };
+  const [uploadedImages, setUploadedImages] = useState([]);
+
+  const handlePayment = () => {
+    const mergedData = Object.values(tukangTimes).reduce((mergedArray, timeEntries) => {
+      const filteredTimeEntries = timeEntries.filter((entry) => entry && entry.id !== null);
+      return mergedArray.concat(filteredTimeEntries);
+    }, []);
+    const filterList = mergedData.filter((item) => item.check_out !== null && !item.hasOwnProperty('id'));
+
+    try {
+      const formData = new FormData();
+
+      formData.append('tukangId', dataProject?.tukangId);
+      formData.append('projectId', id);
+      formData.append('list_time', JSON.stringify(filterList));
+
+      for (var pair of formData.entries()) {
+        console.log(pair[0] + ', ' + pair[1]);
+      }
+
+      Axios.post('/progress/daily', formData, {
+        headers: {
+          'Content-Type': 'multipart-form-data',
+        },
+      })
+        .then((res) => {
+          if (res) {
+            toast.success('Pembayaran berhasil diajukan');
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          toast.error('Pembayaran gagal diajukan');
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <>
@@ -159,6 +222,60 @@ export default function DetailProjectProgress() {
           py: 2,
         }}
       >
+        <Grid container spacing={10}>
+          <Grid item lg={12} md={2}>
+            <form encType="multipart/form-data">
+              <input
+                id="file-upload"
+                type="file"
+                name="list_gambar"
+                multiple
+                accept=".jpg, .jpeg, .png"
+                style={{ display: 'none' }}
+                onChange={handleImageUpload}
+              />
+            </form>
+            <label htmlFor="file-upload" id="file-upload-label" style={{ cursor: 'pointer' }}>
+              <Box
+                component="div"
+                sx={{
+                  width: '100%',
+                  height: '153.2px',
+                  borderRadius: '20px',
+                  backgroundColor: '#EFEDED',
+                  '&:hover': {
+                    opacity: [0.9, 0.8, 0.7],
+                  },
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                }}
+              >
+                <Typography variant="h6" component="h2" sx={{ color: '#000000', textAlign: 'center' }}>
+                  Upload Lampiran
+                </Typography>
+              </Box>
+            </label>
+          </Grid>
+        </Grid>
+        {uploadedImages.length > 0 && (
+          <Grid item lg={12} md={2}>
+            <Typography variant="body1" component="div" sx={{ color: '#000000', marginBottom: '16px' }}>
+              Lampiran:
+            </Typography>
+            <Grid container spacing={2}>
+              {uploadedImages.map((image, index) => (
+                <div key={index} style={{ display: 'flex', flexDirection: 'column' }}>
+                  <img src={URL.createObjectURL(image)} alt={`Image ${index}`} width="auto" height="200" />
+                  <Button variant="outlined" color="error" label={'Delete'} onClick={() => handleDeleteImage(index)}>
+                    Delete
+                  </Button>
+                </div>
+              ))}
+            </Grid>
+          </Grid>
+        )}
         <Grid container spacing={2}>
           <Grid item lg={3}>
             <TextField
@@ -231,50 +348,52 @@ export default function DetailProjectProgress() {
                         <TableBody>
                           {Array.isArray(tukangTimes[item.id]) &&
                             tukangTimes[item.id].map((timeItem, timeIndex) => (
-                              <>
-                                <TableRow key={timeIndex}>
-                                  <TableCell>
-                                    <DatePicker
-                                      value={moment(timeItem?.tanggal_masuk)}
-                                      onChange={(newValue) =>
-                                        handleTimePickerChange(item.id, 'tanggal_masuk', newValue, timeIndex)
-                                      }
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <MobileTimePicker
-                                      value={moment(timeItem.check_in) || null}
-                                      onChange={(newValue) =>
-                                        handleTimePickerChange(item.id, 'check_in', newValue, timeIndex)
-                                      }
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <MobileTimePicker
-                                      value={moment(timeItem.check_out) || null}
-                                      onChange={(newValue) =>
-                                        handleTimePickerChange(item.id, 'check_out', newValue, timeIndex)
-                                      }
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <TextField
-                                      disabled
-                                      value={currency(handleHitunganUpah(timeItem.check_in, item.id))}
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Button
-                                      variant="outlined"
-                                      color="error"
-                                      label={'Hapus'}
-                                      onClick={() => handleDeleteTimeEntry(item.id, timeIndex)}
-                                    >
-                                      Delete
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              </>
+                              <TableRow key={timeIndex}>
+                                <TableCell>
+                                  <DatePicker
+                                    value={moment(timeItem?.tanggal_masuk)}
+                                    onChange={(newValue) =>
+                                      handleTimePickerChange(item.id, 'tanggal_masuk', newValue, timeIndex)
+                                    }
+                                    disabled={!!timeItem.id}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <MobileTimePicker
+                                    value={moment(timeItem.check_in) || null}
+                                    onChange={(newValue) =>
+                                      handleTimePickerChange(item.id, 'check_in', newValue, timeIndex)
+                                    }
+                                    disabled={!!timeItem.id}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <MobileTimePicker
+                                    value={moment(timeItem.check_out) || null}
+                                    onChange={(newValue) =>
+                                      handleTimePickerChange(item.id, 'check_out', newValue, timeIndex)
+                                    }
+                                    disabled={!!timeItem.id}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <TextField
+                                    disabled
+                                    value={currency(handleHitunganUpah(timeItem.check_in, item.id))}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="outlined"
+                                    color="error"
+                                    label={'Hapus'}
+                                    onClick={() => handleDeleteTimeEntry(item.id, timeIndex)}
+                                    disabled={!!timeItem.id}
+                                  >
+                                    Delete
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
                             ))}
                           <TableRow>
                             <TableCell>
@@ -371,7 +490,7 @@ export default function DetailProjectProgress() {
           <Grid item lg={5} />
           <Grid item lg={5} />
           <Grid item lg={2} sx={{ py: 2 }}>
-            <Button variant="contained" color="color" size="large" fullWidth>
+            <Button variant="contained" color="color" size="large" fullWidth onClick={handlePayment}>
               AJUKAN PEMBAYARAN
             </Button>
           </Grid>
