@@ -74,8 +74,10 @@ export default function ProjectPage() {
       status_project = 'reject';
     } else if (selectedOption === 'Disetujui') {
       status_project = 'approved';
-    } else {
+    } else if (selectedOption === 'pending') {
       status_project = 'request';
+    } else {
+      status_project = '';
     }
     let dateRangeFilter = '';
 

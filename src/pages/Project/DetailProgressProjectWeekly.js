@@ -38,13 +38,13 @@ const Item = styled(Paper)(({ theme }) => ({
 export default function DetailProjectProgress() {
   const { id } = useParams();
   const [dataProject, setDataProject] = useState({});
-  const [percentage, setPercentage] = useState('');
   const [uploadedImages, setUploadedImages] = useState([]);
   const [historyPay, setHistoryPay] = useState([]);
   const [percentageArray, setPercentageArray] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const getProgress = async () => {
     try {
-      const response = await Axios.get(`/progress/${id}`);
+      const response = await Axios.get(`/progress/weekly/${id}`);
       if (response.data.message === 'OK') {
         setDataProject(response?.data?.data);
       }
@@ -53,8 +53,41 @@ export default function DetailProjectProgress() {
     }
   };
 
+  const getHistoryPay = async () => {
+    try {
+      const response = await Axios.get(`/pay/history/${id}`);
+      if (response.data.message == 'OK') {
+        const data = response?.data?.data;
+        setHistoryPay(data);
+      }
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getHistoryPay();
+  }, []);
+
+  const calculateTotalPaymentByIndex = (index) => {
+    const payment = historyPay[index];
+
+    if (!payment) {
+      return 0;
+    }
+
+    return payment.pay_details.reduce((total, detail) => {
+      return total + detail.nominal;
+    }, 0);
+  };
+
   const calculateTotalUpahForAllTukangs = () => {
-    const totalUpah = dataProject?.list_jobs?.reduce((total, item) => {
+    const totalUpah = dataProject?.list_jobs?.reduce((total, item, index) => {
+      const percentage = parseFloat(percentageArray[index]?.percentage || '0');
+      if (isNaN(percentage)) {
+        return total;
+      }
       const itemHarga = item.harga * item.qty * (percentage / 100);
       return total + itemHarga;
     }, 0);
@@ -67,8 +100,11 @@ export default function DetailProjectProgress() {
   }, []);
   useEffect(() => {
     if (dataProject.list_jobs) {
-      const defaultPercentages = dataProject.list_jobs.map(() => '');
-      setPercentageArray(defaultPercentages);
+      const defaultPercentages = dataProject.list_jobs.map((item) => ({
+        id: item.id,
+        percentage: item.percentage || '',
+      }));
+      setPercentageArray(defaultPercentages, percentageArray);
     }
   }, [dataProject]);
   const handleImageUpload = (event) => {
@@ -89,24 +125,29 @@ export default function DetailProjectProgress() {
     setUploadedImages(newImages);
   };
 
+  console.log(percentageArray);
   const handlePayment = () => {
     try {
       const paymentDataArray = dataProject?.list_jobs.map((progress) => {
-        const percentageResult = percentageArray[progress.id] / 100;
-        const totalPayment = percentageResult * progress.qty * progress.harga;
+        const percentageObj = percentageArray.find((item) => item.id === progress.id);
+        const percentageValue = parseFloat(percentageObj?.percentage || 0) / 100;
+        const totalPayment = percentageValue * progress.qty * progress.harga;
         const paymentData = {
+          id: progress.id,
           name: progress.name,
           qty: progress.qty,
           nominal: totalPayment,
-          harga: progress.harga,
-          percentage: percentageResult,
-          hasil_akhir: percentageArray[progress.id] === 1 ? 'selesai' : 'belum selesai',
+          harga: totalPayment,
+          percentage: percentageValue, // Use the extracted percentage value
+          hasil_akhir: percentageValue === 1 ? 'selesai' : 'belum selesai',
         };
         return paymentData;
       });
       const formData = new FormData();
       formData.append('tukangId', dataProject?.tukangId);
+      formData.append('total', calculateTotalUpahForAllTukangs());
       formData.append('projectId', id);
+      formData.append('status', 'Belum');
       formData.append('approvalType', 'Accounting');
       [...uploadedImages].forEach((image) => {
         formData.append('list_image', image);
@@ -132,14 +173,26 @@ export default function DetailProjectProgress() {
     }
   };
 
-  const handlePercentageChange = (index, newQty) => {
-    if (!isNaN(newQty)) {
-      setPercentageArray((prevPercentageArray) =>
-        prevPercentageArray.map((value, i) => (i === index ? newQty : value === '' ? 0 : value))
-      );
-    } else {
-      setPercentageArray((prevPercentageArray) => prevPercentageArray.map((value, i) => (i === index ? '' : value)));
-    }
+  const handlePercentageChange = (id, newPercentage) => {
+    setPercentageArray((prevPercentages) =>
+      prevPercentages.map((percentageObj) =>
+        percentageObj.id === id ? { ...percentageObj, percentage: newPercentage } : percentageObj
+      )
+    );
+  };
+  const handleRincianPembayaran = () => {
+    setIsModalOpen(true);
+  };
+
+  const calculateTotalAmountPaid = () => {
+    let totalPaid = 0;
+
+    historyPay.forEach((item, idx) => {
+      const payment = calculateTotalPaymentByIndex(idx);
+      totalPaid += payment;
+    });
+
+    return totalPaid;
   };
 
   return (
@@ -254,12 +307,9 @@ export default function DetailProjectProgress() {
                 <TableHead>
                   <TableRow>
                     <TableCell>No.</TableCell>
-                    <TableCell>PENGERJAAN</TableCell>
-                    <TableCell>PROGRESS</TableCell>
-                    <TableCell>TOTAL</TableCell>
-                    <TableCell>KETERANGAN</TableCell>
-                    <TableCell>TOTAL YANG DIBAYARKAN</TableCell>
+                    <TableCell>TANGGAL PENGAJUAN</TableCell>
                     <TableCell>TOTAL YANG SUDAH DIBAYARKAN</TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -269,38 +319,15 @@ export default function DetailProjectProgress() {
                         <Typography>{idx + 1}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography>{item.name}</Typography>
+                        <Typography>{moment(item.createdAt).format('DD MMMM YYYY')}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography>
-                          <TextField
-                            label={'%PROGRESS'}
-                            type="number"
-                            value={percentageArray[idx] || ''}
-                            onChange={(e) => {
-                              const newValue = parseInt(e.target.value, 10);
-                              if (!isNaN(newValue) && newValue <= 100) {
-                                handlePercentageChange(idx, newValue);
-                              } else if (e.target.value === '') {
-                                handlePercentageChange(idx, '');
-                              }
-                            }}
-                          ></TextField>
-                        </Typography>
+                        <Typography>{currency(calculateTotalPaymentByIndex(idx))}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography>{currency(item.harga)}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography>{currency(item.qty)}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography>
-                          {parseInt(percentageArray[idx] || 0) === 100 ? 'Selesai' : 'Belum Selesai'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography>{currency((item.harga * item.qty * percentage) / 100)}</Typography>
+                        <Button onClick={handleRincianPembayaran} color="color" variant="contained">
+                          Lihat Rincian
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -321,6 +348,7 @@ export default function DetailProjectProgress() {
                     <TableCell>No.</TableCell>
                     <TableCell>PENGERJAAN</TableCell>
                     <TableCell>PROGRESS</TableCell>
+                    <TableCell>PERSENTASE PENGERJAAN</TableCell>
                     <TableCell>QTY</TableCell>
                     <TableCell>@</TableCell>
                     <TableCell>TOTAL</TableCell>
@@ -342,17 +370,22 @@ export default function DetailProjectProgress() {
                           <TextField
                             label={'%PROGRESS'}
                             type="number"
-                            value={percentageArray[idx] || ''}
+                            value={
+                              percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage || ''
+                            }
                             onChange={(e) => {
                               const newValue = parseInt(e.target.value, 10);
                               if (!isNaN(newValue) && newValue <= 100) {
-                                handlePercentageChange(idx, newValue);
+                                handlePercentageChange(item.id, newValue); // Update by id
                               } else if (e.target.value === '') {
-                                handlePercentageChange(idx, '');
+                                handlePercentageChange(item.id, ''); // Update by id
                               }
                             }}
                           ></TextField>
                         </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography>{item.percentage * 100}%</Typography>
                       </TableCell>
                       <TableCell>
                         <Typography>{currency(item.qty)}</Typography>
@@ -364,10 +397,20 @@ export default function DetailProjectProgress() {
                         <Typography>{currency(item.harga * item.qty)}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography>{parseInt(percentageArray[idx]) === 100 ? 'Selesai' : 'Belum Selesai'}</Typography>
+                        <Typography>
+                          {percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage / 100 === 1
+                            ? 'Selesai'
+                            : 'Belum Selesai'}
+                        </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography>{currency(item.harga * item.qty * (percentageArray[idx] / 100))}</Typography>
+                        <Typography>
+                          {currency(
+                            item.harga *
+                              item.qty *
+                              (percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage / 100)
+                          )}
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -408,12 +451,12 @@ export default function DetailProjectProgress() {
           <Grid item lg={3} />
           <Grid item lg={4} sx={{ py: 2 }}>
             <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
-              TOTAL YANG SUDAH DIBAYARKAN DIBAYARKAN
+              TOTAL YANG SUDAH DIBAYARKAN
             </Typography>
           </Grid>
           <Grid item lg={2} sx={{ py: 2 }}>
             <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
-              Rp. {currency(200000000000)}
+              Rp. {currency(calculateTotalAmountPaid())}
             </Typography>
           </Grid>
           <Grid item lg={3} />
@@ -425,7 +468,7 @@ export default function DetailProjectProgress() {
           </Grid>
           <Grid item lg={2} sx={{ py: 2 }}>
             <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
-              Rp. {currency(200000000000)}
+              Rp. {currency(calculateTotalAmountPaid() - calculateTotalUpahForAllTukangs())}
             </Typography>
           </Grid>
           <Grid item lg={5} />

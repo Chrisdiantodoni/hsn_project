@@ -100,7 +100,7 @@ export default function Tukang() {
         <title> Dashboard: Products | Minimal UI </title>
       </Helmet>
 
-      <Container>
+      <Box>
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
           <Pagination count={totalPages} page={currentPage} shape="rounded" color="color" onChange={handlePageChange} />
           <TableContainer component={Paper}>
@@ -162,7 +162,7 @@ export default function Tukang() {
         <ModalComponent open={isAddModalOpen} close={() => setIsAddModalOpen(false)} title={'Tambah Tukang'}>
           <ModalAddNewTukang onClick={() => setIsAddModalOpen(false)} />
         </ModalComponent>
-      </Container>
+      </Box>
     </>
   );
 }

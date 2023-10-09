@@ -58,6 +58,7 @@ export default function DetailProject() {
   const [data, setData] = useState({});
   const [comment, setComment] = useState('');
   const [listApproval, setListApproval] = useState([]);
+  const [selectedProgressImage, setSelectedProgressImage] = useState([]);
   const dataUser = JSON.parse(localStorage.getItem('dataUser'));
   const roles = dataUser?.roles;
   console.log(roles);
@@ -218,6 +219,9 @@ export default function DetailProject() {
       console.log(response);
       if (response?.data?.message === 'OK') {
         const data = response?.data?.data;
+        const progressImage = data?.list_progress.map((imageUrl) => ({
+          url: imageUrl,
+        }));
         const apiImages = data?.list_gambar.map((imageUrl) => ({ url: imageUrl }));
         const mergedImages = [...apiImages, ...selectedImages];
         setSelectedImages(mergedImages);
@@ -232,6 +236,7 @@ export default function DetailProject() {
         setInfoGambar(data?.list_gambar);
         setData(data);
         setListApproval(data?.approval_projects);
+        setSelectedProgressImage(apiImages);
       }
     } catch (error) {
       console.log(error);
@@ -432,6 +437,32 @@ export default function DetailProject() {
                 </Grid>
               </Grid>
             )}
+            <Grid item lg={12}>
+              <Typography variant="body1" component="div" sx={{ color: '#000000', marginBottom: '16px' }}>
+                Progress
+              </Typography>
+              <Grid container spacing={2}>
+                {selectedProgressImage.map((image, index) => (
+                  <Grid item lg={3} key={index}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      {typeof image.url.file_name === 'string' ? (
+                        <img src={image.url.file_name} alt={`Image ${index}`} width="auto" height="200" />
+                      ) : (
+                        <img src={URL.createObjectURL(image.file)} alt={`Image ${index}`} width="auto" height="200" />
+                      )}
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        label={'Delete'}
+                        onClick={() => handleDeleteImage(index)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </Grid>
+                ))}
+              </Grid>
+            </Grid>
 
             <Grid item lg={6} md={2}>
               <TextField

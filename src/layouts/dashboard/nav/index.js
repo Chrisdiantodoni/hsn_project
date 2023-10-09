@@ -133,6 +133,8 @@ export default function Dashboard() {
     routeTitleMap[`/dashboard/paywages/${id}`] = `Rincian Project #${id}`;
     routeTitleMap[`/dashboard/projectprogress-daily/${id}`] = `Rincian Project #${id}`;
     routeTitleMap[`/dashboard/projectprogress-weekly/${id}`] = `Rincian Project #${id}`;
+    routeTitleMap[`/dashboard/paywages-daily/${id}`] = `Pembayaran Project #${id}`;
+    routeTitleMap[`/dashboard/paywages-weekly/${id}`] = `Pembayaran Project #${id}`;
     const path = location.pathname;
     const newTitle = routeTitleMap[path] || 'Default Title';
     console.log(location);

@@ -38,16 +38,18 @@ export default function DetailProjectProgress() {
   const [tukangTimes, setTukangTimes] = useState({});
   const [totalUpahPerTukang, setTotalUpahPerTukang] = useState({});
   const [addedTimeEntries, setAddedTimeEntries] = useState({});
+  const [comments, setComments] = useState('');
   const getProgress = async () => {
     try {
-      const response = await Axios.get(`/progress/daily/${id}`);
+      const response = await Axios.get(`/pay/pay-daily/${id}`);
       if (response.data.message === 'OK') {
         setDataProject(response?.data?.data);
         const tukangTimesData = {};
-        response?.data?.data?.list_tukangs?.forEach((tukang) => {
+        response?.data?.data?.list_tukang?.forEach((tukang) => {
           tukangTimesData[tukang.id] = tukang.tukang_times;
         });
         setTukangTimes(tukangTimesData);
+        setUploadedImages(response?.data?.data.list_gambar);
       }
     } catch (error) {
       console.log(error);
@@ -75,56 +77,12 @@ export default function DetailProjectProgress() {
     getHistoryPay();
   }, []);
 
-  const addTimeEntry = (tukangId) => {
-    const newTimeEntry = {
-      check_in: null,
-      check_out: null,
-      tanggal_masuk: null,
-      tukangId: tukangId,
-    };
-    setTukangTimes((prevTimes) => ({
-      ...prevTimes,
-      [tukangId]: [...(prevTimes[tukangId] || []), newTimeEntry],
-    }));
-    setAddedTimeEntries((prevEntries) => ({
-      ...prevEntries,
-      [tukangId]: [...(prevEntries[tukangId] || []), newTimeEntry],
-    }));
-  };
-
   console.log(addedTimeEntries);
-
-  const handleDeleteTimeEntry = (tukangId, index) => {
-    const updatedTimes = [...tukangTimes[tukangId]];
-    updatedTimes.splice(index, 1);
-
-    setTukangTimes((prevTimes) => ({
-      ...prevTimes,
-      [tukangId]: updatedTimes,
-    }));
-  };
-
-  const handleTimePickerChange = (tukangId, fieldName, newValue, dataIndex) => {
-    const updatedTimes = [...tukangTimes[tukangId]];
-    updatedTimes[dataIndex] = {
-      ...updatedTimes[dataIndex],
-      [fieldName]: newValue,
-    };
-
-    setTukangTimes((prevTimes) => ({
-      ...prevTimes,
-      [tukangId]: updatedTimes,
-    }));
-    setAddedTimeEntries((prevTimes) => ({
-      ...prevTimes,
-      [tukangId]: updatedTimes,
-    }));
-  };
 
   const handleHitunganUpah = (check_in, tukangId) => {
     const checkIn = moment(check_in);
     const checkInHour = checkIn.hours();
-    const hourlyRate = parseFloat(dataProject?.list_tukangs?.find((tukang) => tukang.id === tukangId)?.upah || 0);
+    const hourlyRate = parseFloat(dataProject?.list_tukang?.find((tukang) => tukang.id === tukangId)?.upah || 0);
     let paymentForEntry;
 
     if (checkInHour >= 12) {
@@ -138,44 +96,7 @@ export default function DetailProjectProgress() {
 
   const handleTotalUpah = (tukangId) => {
     const tukangTimeEntries = tukangTimes[tukangId] || [];
-    const hourlyRate = parseFloat(dataProject?.list_tukangs?.find((tukang) => tukang.id === tukangId)?.upah || 0);
-
-    const totalUpah = tukangTimeEntries.reduce((acc, timeEntry) => {
-      const checkIn = moment(timeEntry.check_in);
-      const checkInHour = checkIn.hours();
-      let paymentForEntry;
-
-      if (checkIn.isValid() && !timeEntry.id) {
-        if (checkInHour >= 12) {
-          paymentForEntry = hourlyRate / 2;
-        } else {
-          paymentForEntry = hourlyRate;
-        }
-
-        acc += paymentForEntry;
-      }
-
-      return acc;
-    }, 0);
-
-    return totalUpah;
-  };
-
-  const calculateTotalUpahForAllTukangs = () => {
-    let totalUpahForAllTukangs = 0;
-
-    dataProject?.list_tukangs?.forEach((tukang) => {
-      const tukangId = tukang.id;
-      const totalUpahForTukang = handleTotalUpah(tukangId);
-      totalUpahForAllTukangs += totalUpahForTukang;
-    });
-
-    return totalUpahForAllTukangs;
-  };
-  const handlePayedTukang = (tukangId) => {
-    const tukangTimeEntries = tukangTimes[tukangId] || [];
-    const hourlyRate = parseFloat(dataProject?.list_tukangs?.find((tukang) => tukang.id === tukangId)?.upah || 0);
-
+    const hourlyRate = parseFloat(dataProject?.list_tukang?.find((tukang) => tukang.id === tukangId)?.upah || 0);
     const totalUpah = tukangTimeEntries.reduce((acc, timeEntry) => {
       const checkIn = moment(timeEntry.check_in);
       const checkInHour = checkIn.hours();
@@ -196,79 +117,50 @@ export default function DetailProjectProgress() {
 
     return totalUpah;
   };
-  const calculatePayedTukang = () => {
+
+  const calculateTotalUpahForAllTukangs = () => {
     let totalUpahForAllTukangs = 0;
 
-    dataProject?.list_tukangs?.forEach((tukang) => {
+    dataProject?.list_tukang?.forEach((tukang) => {
       const tukangId = tukang.id;
-      const totalUpahForTukang = handlePayedTukang(tukangId);
+      const totalUpahForTukang = handleTotalUpah(tukangId);
       totalUpahForAllTukangs += totalUpahForTukang;
     });
 
     return totalUpahForAllTukangs;
   };
 
-  const handleImageUpload = (event) => {
-    const files = event.target.files;
-
-    if (files.length > 0) {
-      const newImages = [...uploadedImages];
-
-      for (let i = 0; i < files.length; i++) {
-        newImages.push(files[i]);
-      }
-
-      setUploadedImages(newImages);
-    }
-  };
-  const handleDeleteImage = (indexToDelete) => {
-    const newImages = uploadedImages.filter((_, index) => index !== indexToDelete);
-    setUploadedImages(newImages);
-  };
   const [uploadedImages, setUploadedImages] = useState([]);
 
   const handlePayment = () => {
-    const mergedData = Object.values(tukangTimes).reduce((mergedArray, timeEntries) => {
-      const filteredTimeEntries = timeEntries.filter((entry) => entry && entry.id !== null);
-      return mergedArray.concat(filteredTimeEntries);
-    }, []);
-    const filterList = mergedData.filter((item) => item.check_out !== null && !item.hasOwnProperty('id'));
+    const dataUser = JSON.parse(localStorage.getItem('dataUser'));
+    const roles = dataUser?.roles;
 
-    try {
-      const formData = new FormData();
-
-      formData.append('tukangId', dataProject?.tukangId);
-      formData.append('projectId', id);
-      formData.append('total', calculateTotalUpahForAllTukangs());
-      formData.append('status', 'Belum');
-      formData.append('list_time', JSON.stringify(filterList));
-      [...uploadedImages].forEach((image) => {
-        formData.append('list_image', image);
-      });
-
-      for (var pair of formData.entries()) {
-        console.log(pair[0] + ', ' + pair[1]);
-      }
-
-      Axios.post('/progress/daily', formData, {
-        headers: {
-          'Content-Type': 'multipart-form-data',
-        },
+    const body = {
+      comments: 'BLABLABLA',
+      approvalType:
+        roles === 'Project Manager'
+          ? 'Admin Project'
+          : roles === 'Admin Project'
+          ? 'Accounting'
+          : roles === 'Admin'
+          ? 'Admin'
+          : 'Finance',
+      userId: dataUser?.id,
+      status: 'approve',
+    };
+    Axios.put(`/pay/pay-daily/${id}`, body)
+      .then((res) => {
+        if (res.data.message === 'OK') {
+          toast.success('Pembayaran berhasil disetujui');
+        }
       })
-        .then((res) => {
-          if (res) {
-            toast.success('Pembayaran berhasil diajukan');
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-          toast.error('Pembayaran gagal diajukan');
-        });
-    } catch (error) {
-      console.log(error);
-    }
+      .catch((err) => {
+        console.log(err);
+        toast.error(err);
+      });
+    console.log(body);
   };
-
   return (
     <>
       <Helmet>
@@ -281,43 +173,6 @@ export default function DetailProjectProgress() {
           py: 2,
         }}
       >
-        <Grid container spacing={10}>
-          <Grid item lg={12} md={2}>
-            <form encType="multipart/form-data">
-              <input
-                id="file-upload"
-                type="file"
-                name="list_gambar"
-                multiple
-                accept=".jpg, .jpeg, .png"
-                style={{ display: 'none' }}
-                onChange={handleImageUpload}
-              />
-            </form>
-            <label htmlFor="file-upload" id="file-upload-label" style={{ cursor: 'pointer' }}>
-              <Box
-                component="div"
-                sx={{
-                  width: '100%',
-                  height: '153.2px',
-                  borderRadius: '20px',
-                  backgroundColor: '#EFEDED',
-                  '&:hover': {
-                    opacity: [0.9, 0.8, 0.7],
-                  },
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                }}
-              >
-                <Typography variant="h6" component="h2" sx={{ color: '#000000', textAlign: 'center' }}>
-                  Upload Lampiran
-                </Typography>
-              </Box>
-            </label>
-          </Grid>
-        </Grid>
         {uploadedImages.length > 0 && (
           <Grid item lg={12} md={2}>
             <Typography variant="body1" component="div" sx={{ color: '#000000', marginBottom: '16px' }}>
@@ -326,10 +181,7 @@ export default function DetailProjectProgress() {
             <Grid container spacing={2}>
               {uploadedImages.map((image, index) => (
                 <div key={index} style={{ display: 'flex', flexDirection: 'column' }}>
-                  <img src={URL.createObjectURL(image)} alt={`Image ${index}`} width="auto" height="200" />
-                  <Button variant="outlined" color="error" label={'Delete'} onClick={() => handleDeleteImage(index)}>
-                    Delete
-                  </Button>
+                  <img src={image.file_name} alt={`Image ${index}`} width="auto" height="200" />
                 </div>
               ))}
             </Grid>
@@ -343,7 +195,7 @@ export default function DetailProjectProgress() {
               size="large"
               fullWidth
               disabled
-              value={dataProject?.lokasi}
+              value={dataProject?.project?.lokasi}
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
@@ -358,14 +210,14 @@ export default function DetailProjectProgress() {
               label="Tipe Pekerjaan"
               fullWidth
               size="large"
-              value={dataProject?.type}
+              value={dataProject?.project?.type}
               disabled
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
           <Grid item lg={12}>
             <Grid container spacing={3}>
-              {dataProject?.list_tukangs?.map((item) => (
+              {dataProject?.list_tukang?.map((item) => (
                 <Grid item lg={12} key={item.id}>
                   <Grid container>
                     <Grid item lg={6}>
@@ -382,17 +234,6 @@ export default function DetailProjectProgress() {
                     }}
                   />
                   <Grid container>
-                    <Grid item lg={4} sx={{ py: 1 }}>
-                      <Button
-                        variant="contained"
-                        color="color"
-                        label={'Tambah Waktu'}
-                        onClick={() => addTimeEntry(item.id)}
-                      >
-                        Tambah Waktu
-                      </Button>
-                    </Grid>
-
                     <TableContainer component={Paper} sx={{ minWidth: 650, border: '1px solid #ccc' }}>
                       <Table>
                         <TableHead>
@@ -409,29 +250,17 @@ export default function DetailProjectProgress() {
                             tukangTimes[item.id].map((timeItem, timeIndex) => (
                               <TableRow key={timeIndex}>
                                 <TableCell>
-                                  <DatePicker
-                                    value={moment(timeItem?.tanggal_masuk)}
-                                    onChange={(newValue) =>
-                                      handleTimePickerChange(item.id, 'tanggal_masuk', newValue, timeIndex)
-                                    }
-                                    disabled={!!timeItem.id}
-                                  />
+                                  <DatePicker value={moment(timeItem?.tanggal_masuk)} disabled={!!timeItem.id} />
                                 </TableCell>
                                 <TableCell>
                                   <MobileTimePicker
                                     value={moment(timeItem.check_in) || null}
-                                    onChange={(newValue) =>
-                                      handleTimePickerChange(item.id, 'check_in', newValue, timeIndex)
-                                    }
                                     disabled={!!timeItem.id}
                                   />
                                 </TableCell>
                                 <TableCell>
                                   <MobileTimePicker
                                     value={moment(timeItem.check_out) || null}
-                                    onChange={(newValue) =>
-                                      handleTimePickerChange(item.id, 'check_out', newValue, timeIndex)
-                                    }
                                     disabled={!!timeItem.id}
                                   />
                                 </TableCell>
@@ -440,17 +269,6 @@ export default function DetailProjectProgress() {
                                     disabled
                                     value={currency(handleHitunganUpah(timeItem.check_in, item.id))}
                                   />
-                                </TableCell>
-                                <TableCell>
-                                  <Button
-                                    variant="outlined"
-                                    color="error"
-                                    label={'Hapus'}
-                                    onClick={() => handleDeleteTimeEntry(item.id, timeIndex)}
-                                    disabled={!!timeItem.id}
-                                  >
-                                    Delete
-                                  </Button>
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -526,12 +344,12 @@ export default function DetailProjectProgress() {
           <Grid item lg={3} />
           <Grid item lg={4} sx={{ py: 2 }}>
             <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
-              TOTAL YANG SUDAH DIBAYARKAN
+              TOTAL YANG SUDAH DIBAYARKAN DIBAYARKAN
             </Typography>
           </Grid>
           <Grid item lg={2} sx={{ py: 2 }}>
             <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
-              Rp. {currency(calculatePayedTukang())}
+              Rp. {currency(200000000000)}
             </Typography>
           </Grid>
           <Grid item lg={3} />
@@ -543,7 +361,7 @@ export default function DetailProjectProgress() {
           </Grid>
           <Grid item lg={2} sx={{ py: 2 }}>
             <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
-              Rp. {currency(calculateTotalUpahForAllTukangs() - calculatePayedTukang())}
+              Rp. {currency(200000000000)}
             </Typography>
           </Grid>
           <Grid item lg={5} />

@@ -36,7 +36,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useTheme } from '@mui/material/styles';
 
 // ----------------------------------------------------------------------
-
 export default function ProjectPage() {
   const [value, setValue] = useState([null, null]);
   const navigate = useNavigate();
@@ -47,10 +46,6 @@ export default function ProjectPage() {
   const [search, setSearch] = useState('');
   const theme = useTheme();
   const [selectedOption, setSelectedOption] = useState('');
-  const handleAddApplication = () => {
-    navigate('/Dashboard/AddApplication');
-  };
-
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
@@ -58,7 +53,6 @@ export default function ProjectPage() {
   const debouncedValue = useDebounce(search, 1000);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-
   useEffect(() => {
     setDebouncedSearch(debouncedValue);
   }, [debouncedValue]);
@@ -85,7 +79,7 @@ export default function ProjectPage() {
     }
     try {
       const response = await Axios.get(
-        `/project/?page=${page}&size=${pageSize}&column_name=nama_project&query=${search}&status=${status_project}${dateRangeFilter}`
+        `/pay/?page=${page}&size=${pageSize}&column_name=nama_project&query=${search}&status=${status_project}${dateRangeFilter}`
       );
       const { totalPages } = response?.data?.data;
       setTotalPages(totalPages);
@@ -100,7 +94,6 @@ export default function ProjectPage() {
   };
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
-    console.log(newPage);
   };
 
   return (
@@ -109,7 +102,7 @@ export default function ProjectPage() {
         <title> Dashboard: Products | Minimal UI </title>
       </Helmet>
 
-      <Container>
+      <Box>
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
           <Pagination count={totalPages} page={currentPage} shape="rounded" color="color" onChange={handlePageChange} />
           <TableContainer component={Paper}>
@@ -118,7 +111,8 @@ export default function ProjectPage() {
                 <TableRow>
                   <TableCell>#ID</TableCell>
                   <TableCell>Nama Project</TableCell>
-                  <TableCell>Harga</TableCell>
+                  <TableCell>Tipe Project</TableCell>
+                  <TableCell>Nominal Pembayaran</TableCell>
                   <TableCell>Mulai</TableCell>
                   <TableCell>Selesai</TableCell>
                   <TableCell>Tanggal Pengajuan</TableCell>
@@ -130,8 +124,9 @@ export default function ProjectPage() {
                 {data.map((item, index) => (
                   <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell>{item.id}</TableCell>
-                    <TableCell>{item.nama_project}</TableCell>
-                    <TableCell>{currency(item.harga)}</TableCell>
+                    <TableCell>{item.project.nama_project}</TableCell>
+                    <TableCell>{item.project.type}</TableCell>
+                    <TableCell>{currency(item.total)}</TableCell>
                     <TableCell>{moment(item.start).format('DD MMMM YYYY')}</TableCell>
                     <TableCell>{moment(item.end).format('DD MMMM YYYY')}</TableCell>
                     <TableCell>{moment(item.createdAt).format('DD MMMM YYYY')}</TableCell>
@@ -140,10 +135,18 @@ export default function ProjectPage() {
                         color: item.status === 'reject' ? '#E84040' : item.status === 'approve' ? '#028617' : '#000000',
                       }}
                     >
-                      {item.status == 'request' ? 'Pending' : item.status === 'reject' ? 'Ditolak' : 'Disetujui'}
+                      {item.status == 'belum' ? 'Belum Dibayar' : 'Sudah Dibayar'}
                     </TableCell>
                     <TableCell>
-                      <Link to={`/dashboard/detailproject/${item.id}`}>[Lihat]</Link>
+                      <Link
+                        to={
+                          item?.project.type === 'Harian'
+                            ? `/dashboard/paywages-daily/${item.id}`
+                            : `/dashboard/paywages-weekly/${item.id}`
+                        }
+                      >
+                        [Lihat]
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -199,14 +202,9 @@ export default function ProjectPage() {
                 />
               </FormControl>
             </Grid>
-            <Grid lg={4} />
-
-            <Grid item xs={12} sm={6} md={3} lg={4}>
-              <Button color="color" variant="contained" size="large" label="TAMBAH" onClick={handleAddApplication} />
-            </Grid>
           </Grid>
         </Stack>
-      </Container>
+      </Box>
     </>
   );
 }

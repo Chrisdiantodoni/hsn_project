@@ -1,13 +1,11 @@
 import { Helmet } from 'react-helmet-async';
-import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 // @mui
 import { styled } from '@mui/material/styles';
-import { Container, Typography, Divider, Stack, Button, Box } from '@mui/material';
+import { Container, Typography, Box } from '@mui/material';
 // hooks
 import useResponsive from '../hooks/useResponsive';
 // components
-import Iconify from '../components/iconify';
 // sections
 import { LoginForm } from '../sections/auth/login';
 import Image from '../Assets/HOKITO.png';

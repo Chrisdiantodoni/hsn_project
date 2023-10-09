@@ -16,7 +16,8 @@ import DetailProject from './pages/Project/DetailProject';
 import ProgressPage from './pages/Project/ProjectProgress';
 import DetailProjectProgressDaily from './pages/Project/DetailProgressProjectDaily';
 import DetailProjectProgressWeekly from './pages/Project/DetailProgressProjectWeekly';
-import DetailPayWages from './pages/Project/DetailWages';
+import DetailPayWagesDaily from './pages/Project/DetailWagesDaily';
+import DetailPayWagesWeekly from './pages/Project/DetailWagesWeekly';
 import PayWagesPage from './pages/Project/PayWages';
 import Page403 from './pages/Page403';
 import Tukang from './pages/Tukang/Tukang';
@@ -85,13 +86,15 @@ export default function Router() {
         },
         {
           path: 'paywages',
-          element: <PayWagesPage />,
-          children: [
-            {
-              path: 'paywages/:id',
-              element: <PrivateRoute element={<DetailPayWages />} allowedRoles={['Admin', 'Requester']} />,
-            },
-          ],
+          element: <PrivateRoute element={<PayWagesPage />} allowedRoles={['Admin', 'Requester']} />,
+        },
+        {
+          path: 'paywages-weekly/:id',
+          element: <PrivateRoute element={<DetailPayWagesWeekly />} allowedRoles={['Admin', 'Requester']} />,
+        },
+        {
+          path: 'paywages-daily/:id',
+          element: <PrivateRoute element={<DetailPayWagesDaily />} allowedRoles={['Admin', 'Requester']} />,
         },
         { path: 'user', element: <UserList /> },
         { path: 'stock', element: <Stock /> },

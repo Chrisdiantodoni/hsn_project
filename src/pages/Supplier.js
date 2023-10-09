@@ -101,7 +101,7 @@ export default function Supplier() {
         <title> Dashboard: Products | Minimal UI </title>
       </Helmet>
 
-      <Container>
+      <Box>
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
           <Pagination count={totalPages} page={currentPage} shape="rounded" color="color" onChange={handlePageChange} />
           <TableContainer component={Paper}>
@@ -158,7 +158,7 @@ export default function Supplier() {
         <ModalComponent open={isAddModalOpen} close={() => setIsAddModalOpen(false)} title={'Tambah Supplier'}>
           <ModalAddNewSupplier onClick={() => setIsAddModalOpen(false)} />
         </ModalComponent>
-      </Container>
+      </Box>
     </>
   );
 }
