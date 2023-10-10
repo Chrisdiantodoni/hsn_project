@@ -23,6 +23,7 @@ import {
   Pagination,
   Skeleton,
 } from '@mui/material';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Search from '@mui/icons-material/Search';
 import 'rsuite/dist/rsuite.css';
 import { Button } from '../components';
@@ -30,52 +31,41 @@ import { Axios } from 'src/utils';
 import { toast } from 'react-toastify';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { ModalComponent, ModalAddNewSupplier } from '../components';
+import { getSupplier } from 'src/API';
 // components
 
 // ----------------------------------------------------------------------
 
 export default function Supplier() {
   const [search, setSearch] = useState('');
-  const [dataSupplier, setDataSupplier] = useState([]);
-  const [totalPages, setTotalPages] = useState(0);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const debouncedValue = useDebounce(search, 1000);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setDebouncedSearch(debouncedValue);
   }, [debouncedValue]);
 
-  const getData = async (search = '', page = 1) => {
-    try {
-      setIsLoading(true);
-      const response = await Axios.get(
-        `/supplier?page=${page}&size=${pageSize}&column_name=nama_supplier&query=${search}&id=${search}`
-      );
-      const { totalPages } = response?.data?.data;
-      setTotalPages(totalPages);
-      console.log(response);
-      if (response.data.message === 'OK') {
-        const data = response?.data?.data?.result;
-        setDataSupplier(data);
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error('Gagal ambil data');
-    }
-  };
-  const handlePageChange = (event, newPage) => {
-    setCurrentPage(newPage);
-    console.log(newPage);
-  };
+  const {
+    isLoading,
+    data: data,
+    error,
+  } = useQuery({
+    queryKey: ['suppliers', { currentPage, pageSize, debouncedSearch }],
+    queryFn: async () => {
+      const response = await getSupplier(currentPage, pageSize, debouncedSearch);
+      return response;
+    },
+  });
 
-  useEffect(() => {
-    getData(debouncedSearch, currentPage, isAddModalOpen);
-  }, [debouncedSearch, currentPage, isAddModalOpen]);
+  queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+
+  if (error) {
+    return <div>Error {error.message}</div>;
+  }
 
   const handleExport = async () => {
     try {
@@ -94,6 +84,9 @@ export default function Supplier() {
       console.error('CSV export error:', error);
     }
   };
+  const handlePageChange = (event, newPage) => {
+    setCurrentPage(newPage);
+  };
 
   return (
     <>
@@ -103,7 +96,13 @@ export default function Supplier() {
 
       <Box>
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
-          <Pagination count={totalPages} page={currentPage} shape="rounded" color="color" onChange={handlePageChange} />
+          <Pagination
+            count={data?.totalPages}
+            page={currentPage}
+            shape="rounded"
+            color="color"
+            onChange={handlePageChange}
+          />
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 650, border: '1px solid #ccc' }} aria-label="simple table">
               <TableHead>
@@ -115,7 +114,7 @@ export default function Supplier() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {(isLoading ? Array.from({ length: pageSize }) : dataSupplier).map((item, index) => (
+                {(isLoading ? Array.from({ length: pageSize }) : data?.data.result).map((item, index) => (
                   <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell>{isLoading ? <Skeleton animation="wave" /> : item.id}</TableCell>
                     <TableCell>{isLoading ? <Skeleton animation="wave" /> : item.nama_supplier}</TableCell>

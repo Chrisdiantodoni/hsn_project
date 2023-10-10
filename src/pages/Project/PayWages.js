@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 // @mui
 import {
   Box,
@@ -34,13 +35,13 @@ import { useDebounce } from 'src/hooks/useDebounce';
 // components
 import 'react-toastify/dist/ReactToastify.css';
 import { useTheme } from '@mui/material/styles';
+import { getPay } from 'src/API';
 
 // ----------------------------------------------------------------------
 export default function ProjectPage() {
   const [value, setValue] = useState([null, null]);
   const navigate = useNavigate();
   const [id, setId] = useState('');
-  const [data, setData] = useState([]);
   const options = ['Ditolak', 'Pending', 'Disetujui'];
   const roles = 'Approver';
   const [search, setSearch] = useState('');
@@ -56,42 +57,30 @@ export default function ProjectPage() {
   useEffect(() => {
     setDebouncedSearch(debouncedValue);
   }, [debouncedValue]);
+  let status_project = '';
+  if (selectedOption === 'Ditolak') {
+    status_project = 'reject';
+  } else if (selectedOption === 'Disetujui') {
+    status_project = 'approved';
+  } else {
+    status_project = 'request';
+  }
 
-  useEffect(() => {
-    getProject(debouncedSearch, currentPage, selectedOption, startDate, endDate);
-  }, [debouncedSearch, currentPage, selectedOption, startDate, endDate]);
+  const start = startDate ? startDate.format('YYYY-MM-DD HH:mm:ss') : '';
+  const end = endDate ? endDate.format('YYYY-MM-DD HH:mm:ss') : '';
 
-  const getProject = async (search = '', page = 1) => {
-    let status_project = '';
-    if (selectedOption === 'Ditolak') {
-      status_project = 'reject';
-    } else if (selectedOption === 'Disetujui') {
-      status_project = 'approved';
-    } else {
-      status_project = 'request';
-    }
-    let dateRangeFilter = '';
+  const {
+    isLoading,
+    data: data,
+    error,
+  } = useQuery({
+    queryKey: ['pays', { debouncedSearch, currentPage, pageSize, status_project, start, end }],
+    queryFn: async () => {
+      const response = await getPay(debouncedSearch, currentPage, pageSize, status_project, start, end);
+      return response;
+    },
+  });
 
-    const start = startDate ? startDate.format('YYYY-MM-DD HH:mm:ss') : '';
-    const end = endDate ? endDate.format('YYYY-MM-DD HH:mm:ss') : '';
-    if (startDate && endDate) {
-      dateRangeFilter = `&start=${start}&end=${end}`;
-    }
-    try {
-      const response = await Axios.get(
-        `/pay/?page=${page}&size=${pageSize}&column_name=nama_project&query=${search}&status=${status_project}${dateRangeFilter}`
-      );
-      const { totalPages } = response?.data?.data;
-      setTotalPages(totalPages);
-      if (response.data.message === 'OK') {
-        const data = response?.data?.data;
-        setData(data?.result);
-        console.log(data);
-      }
-    } catch (error) {
-      toast.error('Gagal Ambil Data');
-    }
-  };
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
   };
@@ -104,7 +93,13 @@ export default function ProjectPage() {
 
       <Box>
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
-          <Pagination count={totalPages} page={currentPage} shape="rounded" color="color" onChange={handlePageChange} />
+          <Pagination
+            count={data?.data.totalPages}
+            page={currentPage}
+            shape="rounded"
+            color="color"
+            onChange={handlePageChange}
+          />
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 650, border: '1px solid #ccc' }} aria-label="simple table">
               <TableHead>
@@ -121,7 +116,7 @@ export default function ProjectPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {data.map((item, index) => (
+                {data?.data?.result.map((item, index) => (
                   <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell>{item.id}</TableCell>
                     <TableCell>{item.project.nama_project}</TableCell>

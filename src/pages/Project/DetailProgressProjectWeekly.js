@@ -98,6 +98,7 @@ export default function DetailProjectProgress() {
   useEffect(() => {
     getProgress();
   }, []);
+
   useEffect(() => {
     if (dataProject.list_jobs) {
       const defaultPercentages = dataProject.list_jobs.map((item) => ({
@@ -193,6 +194,24 @@ export default function DetailProjectProgress() {
     });
 
     return totalPaid;
+  };
+
+  const handleQtyChange = (e, idx) => {
+    const newValue = parseFloat(e.target.value);
+    if (!isNaN(newValue)) {
+      const newDataProject = { ...dataProject };
+      newDataProject.list_jobs[idx].qty = newValue;
+      setDataProject(newDataProject);
+    }
+  };
+
+  const handleHargaChange = (e, idx) => {
+    const newValue = parseFloat(e.target.value);
+    if (!isNaN(newValue)) {
+      const newDataProject = { ...dataProject };
+      newDataProject.list_jobs[idx].harga = newValue;
+      setDataProject(newDataProject);
+    }
   };
 
   return (
@@ -385,13 +404,23 @@ export default function DetailProjectProgress() {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography>{item.percentage * 100}%</Typography>
+                        <Typography>{(item.percentage * 100).toFixed(2)}%</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography>{currency(item.qty)}</Typography>
+                        <TextField
+                          type="number"
+                          value={item.qty}
+                          onChange={(e) => handleQtyChange(e, idx)}
+                          label="Qty"
+                        />
                       </TableCell>
                       <TableCell>
-                        <Typography>{currency(item.harga)}</Typography>
+                        <TextField
+                          type="number"
+                          value={item.harga}
+                          onChange={(e) => handleHargaChange(e, idx)}
+                          label="Harga"
+                        />
                       </TableCell>
                       <TableCell>
                         <Typography>{currency(item.harga * item.qty)}</Typography>

@@ -1,11 +1,10 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 // @mui
 import {
   Box,
-  Container,
   Stack,
-  Typography,
   Table,
   TableBody,
   TableCell,
@@ -18,33 +17,26 @@ import {
   OutlinedInput,
   InputLabel,
   FormControl,
-  Autocomplete,
-  Pagination,
   TextField,
+  Pagination,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Search from '@mui/icons-material/Search';
-import { DateRangePicker } from 'rsuite';
 import 'rsuite/dist/rsuite.css';
-import { Button } from '../../components';
+import { getProgress } from 'src/API';
 import { Axios, currency } from 'src/utils';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import { useDebounce } from 'src/hooks/useDebounce';
 // components
 import 'react-toastify/dist/ReactToastify.css';
-import { useTheme } from '@mui/material/styles';
 
 // ----------------------------------------------------------------------
 
 export default function ProjectPage() {
-  const [value, setValue] = useState([null, null]);
   const [id, setId] = useState('');
-  const [data, setData] = useState([]);
-  const roles = 'Approver';
   const [search, setSearch] = useState('');
-  const theme = useTheme();
   const [selectedOption, setSelectedOption] = useState('');
 
   const [totalPages, setTotalPages] = useState(0);
@@ -59,33 +51,25 @@ export default function ProjectPage() {
     setDebouncedSearch(debouncedValue);
   }, [debouncedValue]);
 
-  useEffect(() => {
-    getProject(debouncedSearch, currentPage, selectedOption, startDate, endDate);
-  }, [debouncedSearch, currentPage, selectedOption, startDate, endDate]);
+  const start = startDate ? startDate.format('YYYY-MM-DD HH:mm:ss') : '';
+  const end = endDate ? endDate.format('YYYY-MM-DD HH:mm:ss') : '';
 
-  const getProject = async (search = '', page = 1) => {
-    let dateRangeFilter = '';
+  const {
+    isLoading,
+    error,
+    data: data,
+  } = useQuery({
+    queryKey: ['progress', { debouncedSearch, currentPage, pageSize, start, end }],
+    queryFn: async () => {
+      const response = await getProgress(debouncedSearch, currentPage, pageSize, start, end);
+      return response;
+    },
+  });
 
-    const start = startDate ? startDate.format('YYYY-MM-DD HH:mm:ss') : '';
-    const end = endDate ? endDate.format('YYYY-MM-DD HH:mm:ss') : '';
-    if (startDate && endDate) {
-      dateRangeFilter = `&start=${start}&end=${end}`;
-    }
-    try {
-      const response = await Axios.get(
-        `/progress/?page=${page}&size=${pageSize}&column_name=nama_project&query=${search}&${dateRangeFilter}`
-      );
-      const { totalPages } = response?.data?.data;
-      setTotalPages(totalPages);
-      if (response.data.message === 'OK') {
-        const data = response?.data?.data;
-        setData(data?.result);
-        console.log(data);
-      }
-    } catch (error) {
-      toast.error('Gagal Ambil Data');
-    }
-  };
+  if (error) return <div>An error occurred: {error.message}</div>;
+
+  console.log(data?.data);
+
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
     console.log(newPage);
@@ -115,7 +99,7 @@ export default function ProjectPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {data.map((item, index) => (
+                {data?.data?.result.map((item, index) => (
                   <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell>{item.id}</TableCell>
                     <TableCell>{item.nama_project}</TableCell>

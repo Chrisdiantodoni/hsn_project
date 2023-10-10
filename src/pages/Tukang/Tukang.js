@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 // @mui
 import {
   Box,
@@ -18,8 +19,6 @@ import {
   OutlinedInput,
   InputLabel,
   FormControl,
-  Autocomplete,
-  TextField,
   Pagination,
   Skeleton,
 } from '@mui/material';
@@ -28,53 +27,49 @@ import 'rsuite/dist/rsuite.css';
 import { Axios } from 'src/utils';
 import { toast } from 'react-toastify';
 import { useDebounce } from 'src/hooks/useDebounce';
-import { ModalComponent, ModalAddNewSupplier, Button, ModalAddNewTukang } from '../../components';
+import { ModalComponent, Button, ModalAddNewTukang } from '../../components';
+import { getTukang } from 'src/API';
 // components
 
 // ----------------------------------------------------------------------
 
 export default function Tukang() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [dataTukang, setDataTukang] = useState([]);
-  const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const debouncedValue = useDebounce(search, 1000);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setDebouncedSearch(debouncedValue);
   }, [debouncedValue]);
 
-  const getData = async (search = '', page = 1) => {
-    try {
-      setIsLoading(true);
-      const response = await Axios.get(
-        `/tukang?page=${page}&size=${pageSize}&column_name=nama_tukang&query=${search}&id=${search}`
-      );
-      const { totalPages } = response?.data?.data;
-      setTotalPages(totalPages);
-      console.log(response);
-      if (response.data.message === 'OK') {
-        const data = response?.data?.data?.result;
-        setDataTukang(data);
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error('Gagal ambil data');
-    }
-  };
+  const {
+    isLoading,
+    data: data,
+    error,
+  } = useQuery({
+    queryKey: ['tukangs', currentPage, pageSize, debouncedSearch],
+    queryFn: async () => {
+      const response = await getTukang(currentPage, pageSize, debouncedSearch);
+      return response;
+    },
+  });
+
+  queryClient.invalidateQueries({
+    queryKey: ['tukangs'],
+  });
+
+  if (error) {
+    return <div>Error {error.message}</div>;
+  }
+
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
     console.log(newPage);
   };
-
-  useEffect(() => {
-    getData(debouncedSearch, currentPage, isAddModalOpen);
-  }, [debouncedSearch, currentPage, isAddModalOpen]);
 
   const handleExport = async () => {
     try {
@@ -102,24 +97,28 @@ export default function Tukang() {
 
       <Box>
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
-          <Pagination count={totalPages} page={currentPage} shape="rounded" color="color" onChange={handlePageChange} />
+          <Pagination
+            count={data?.totalPages}
+            page={currentPage}
+            shape="rounded"
+            color="color"
+            onChange={handlePageChange}
+          />
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 650, border: '1px solid #ccc' }} aria-label="simple table">
               <TableHead>
                 <TableRow>
                   <TableCell>#ID</TableCell>
                   <TableCell>Nama Tukang</TableCell>
-                  <TableCell>Status</TableCell>
                   <TableCell>Alamat</TableCell>
                   <TableCell>No. Handphone</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {(isLoading ? Array.from({ length: pageSize }) : dataTukang).map((item, index) => (
+                {(isLoading ? Array.from({ length: pageSize }) : data.data?.result).map((item, index) => (
                   <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell>{isLoading ? <Skeleton animation="wave" /> : item.id}</TableCell>
                     <TableCell>{isLoading ? <Skeleton animation="wave" /> : item.nama_tukang}</TableCell>
-                    <TableCell>{isLoading ? <Skeleton animation="wave" /> : item.type}</TableCell>
                     <TableCell>{isLoading ? <Skeleton animation="wave" /> : item.alamat}</TableCell>
                     <TableCell>{isLoading ? <Skeleton animation="wave" /> : item.no_hp}</TableCell>
                   </TableRow>
@@ -156,9 +155,7 @@ export default function Tukang() {
             </Grid>
           </Grid>
         </Stack>
-        {/* <ModalComponent open={isAddModalOpen} close={() => setIsAddModalOpen(false)} title={'Edit Tukang'}>
-          <ModalAddNewSupplier onClick={() => setIsAddModalOpen(false)} />
-        </ModalComponent> */}
+
         <ModalComponent open={isAddModalOpen} close={() => setIsAddModalOpen(false)} title={'Tambah Tukang'}>
           <ModalAddNewTukang onClick={() => setIsAddModalOpen(false)} />
         </ModalComponent>

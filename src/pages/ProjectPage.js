@@ -1,5 +1,7 @@
 import { Helmet } from 'react-helmet-async';
+import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 // @mui
 import {
   Box,
@@ -34,25 +36,18 @@ import moment from 'moment';
 import { useDebounce } from 'src/hooks/useDebounce';
 // components
 import 'react-toastify/dist/ReactToastify.css';
-import { useTheme } from '@mui/material/styles';
-
+import { getProject } from '../API';
 // ----------------------------------------------------------------------
 
 export default function ProjectPage() {
-  const [value, setValue] = useState([null, null]);
   const navigate = useNavigate();
-  const [id, setId] = useState('');
-  const [data, setData] = useState([]);
+  // const [data, setData] = useState([]);
   const options = ['Ditolak', 'Pending', 'Disetujui'];
-  const roles = 'Approver';
   const [search, setSearch] = useState('');
-  const theme = useTheme();
   const [selectedOption, setSelectedOption] = useState('');
   const handleAddApplication = () => {
     navigate('/dashboard/addapplication');
   };
-
-  const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -64,43 +59,33 @@ export default function ProjectPage() {
     setDebouncedSearch(debouncedValue);
   }, [debouncedValue]);
 
-  useEffect(() => {
-    getProject(debouncedSearch, currentPage, selectedOption, startDate, endDate);
-  }, [debouncedSearch, currentPage, selectedOption, startDate, endDate]);
+  let status_project;
+  if (selectedOption === 'Ditolak') {
+    status_project = 'reject';
+  } else if (selectedOption === 'Disetujui') {
+    status_project = 'approved';
+  } else if (selectedOption === 'Pending') {
+    status_project = 'request';
+  } else {
+    status_project = '';
+  }
 
-  const getProject = async (search = '', page = 1) => {
-    let status_project = '';
-    if (selectedOption === 'Ditolak') {
-      status_project = 'reject';
-    } else if (selectedOption === 'Disetujui') {
-      status_project = 'approved';
-    } else if (selectedOption === 'pending') {
-      status_project = 'request';
-    } else {
-      status_project = '';
-    }
-    let dateRangeFilter = '';
+  const start = startDate ? startDate.format('YYYY-MM-DD HH:mm:ss') : '';
+  const end = endDate ? endDate.format('YYYY-MM-DD HH:mm:ss') : '';
+  const {
+    isLoading,
+    data: data,
+    error,
+  } = useQuery({
+    queryKey: ['result', debouncedSearch, currentPage, status_project, start, end],
+    queryFn: async () => {
+      const data = await getProject(debouncedSearch, currentPage, pageSize, status_project, start, end);
+      return data;
+    },
+  });
 
-    const start = startDate ? startDate.format('YYYY-MM-DD HH:mm:ss') : '';
-    const end = endDate ? endDate.format('YYYY-MM-DD HH:mm:ss') : '';
-    if (startDate && endDate) {
-      dateRangeFilter = `&start=${start}&end=${end}`;
-    }
-    try {
-      const response = await Axios.get(
-        `/project/?page=${page}&size=${pageSize}&column_name=nama_project&query=${search}&status=${status_project}${dateRangeFilter}`
-      );
-      const { totalPages } = response?.data?.data;
-      setTotalPages(totalPages);
-      if (response.data.message === 'OK') {
-        const data = response?.data?.data;
-        setData(data?.result);
-        console.log(data);
-      }
-    } catch (error) {
-      toast.error('Gagal Ambil Data');
-    }
-  };
+  if (error) return <div>An error occurred: {error.message}</div>;
+
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
     console.log(newPage);
@@ -114,7 +99,13 @@ export default function ProjectPage() {
 
       <Box>
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
-          <Pagination count={totalPages} page={currentPage} shape="rounded" color="color" onChange={handlePageChange} />
+          <Pagination
+            count={data?.totalPages}
+            page={currentPage}
+            shape="rounded"
+            color="color"
+            onChange={handlePageChange}
+          />
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 650, border: '1px solid #ccc' }} aria-label="simple table">
               <TableHead>
@@ -130,7 +121,7 @@ export default function ProjectPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {data.map((item, index) => (
+                {data?.data.result.map((item, index) => (
                   <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell>{item.id}</TableCell>
                     <TableCell>{item.nama_project}</TableCell>

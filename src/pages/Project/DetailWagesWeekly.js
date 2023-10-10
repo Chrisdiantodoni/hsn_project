@@ -282,7 +282,6 @@ export default function DetailProjectProgress() {
                         <TableCell>
                           <Typography>{item.name}</Typography>
                         </TableCell>
-
                         <TableCell>
                           <Typography>{item.percentage * 100}%</Typography>
                         </TableCell>

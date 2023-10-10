@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 // @mui
 import {
   Box,
@@ -29,6 +30,7 @@ import { Axios, currency } from 'src/utils';
 import { toast } from 'react-toastify';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { Button } from 'src/components';
+import { getStock } from 'src/API';
 // components
 
 // ----------------------------------------------------------------------
@@ -41,39 +43,28 @@ export default function Stock() {
   const pageSize = 10;
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const debouncedValue = useDebounce(search, 1000);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setDebouncedSearch(debouncedValue);
   }, [debouncedValue]);
 
-  const getData = async (search = '', page = 1) => {
-    try {
-      setIsLoading(true);
-      const response = await Axios.get(
-        `/stock?page=${page}&size=${pageSize}&column_name=nama_barang&query=${search}&supplier=${search}`
-      );
-      const { totalPages } = response?.data?.data;
-      setTotalPages(totalPages);
-      console.log(response);
-      if (response.data.message === 'OK') {
-        const data = response?.data?.data?.result;
-        setDataStock(data);
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error('Gagal ambil data');
-    }
-  };
+  const {
+    isLoading,
+    data: data,
+    error,
+  } = useQuery({
+    queryKey: ['stock', { currentPage, pageSize, debouncedSearch }],
+    queryFn: async () => {
+      const response = await getStock(currentPage, pageSize, debouncedSearch);
+      return response;
+    },
+  });
+
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
     console.log(newPage);
   };
 
-  useEffect(() => {
-    getData(debouncedSearch, currentPage);
-  }, [debouncedSearch, currentPage]);
   const handleExport = async () => {
     try {
       const response = await Axios.get('/stock/export', {
@@ -100,7 +91,13 @@ export default function Stock() {
 
       <Container>
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
-          <Pagination count={totalPages} page={currentPage} shape="rounded" color="color" onChange={handlePageChange} />
+          <Pagination
+            count={data?.totalPages}
+            page={currentPage}
+            shape="rounded"
+            color="color"
+            onChange={handlePageChange}
+          />
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 650, border: '1px solid #ccc' }} aria-label="simple table">
               <TableHead>
@@ -113,7 +110,7 @@ export default function Stock() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {(isLoading ? Array.from({ length: pageSize }) : dataStock).map((item, index) => (
+                {(isLoading ? Array.from({ length: pageSize }) : data?.data.result).map((item, index) => (
                   <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell>{isLoading ? <Skeleton animation="wave" /> : item.id}</TableCell>
                     <TableCell>{isLoading ? <Skeleton animation="wave" /> : item.nama_barang}</TableCell>

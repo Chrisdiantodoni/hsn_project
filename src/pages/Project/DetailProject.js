@@ -236,7 +236,7 @@ export default function DetailProject() {
         setInfoGambar(data?.list_gambar);
         setData(data);
         setListApproval(data?.approval_projects);
-        setSelectedProgressImage(apiImages);
+        setSelectedProgressImage(progressImage);
       }
     } catch (error) {
       console.log(error);

@@ -1,61 +1,78 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
 import TextField from '@mui/material/TextField';
 import { Grid, FormControl, Select, InputLabel, MenuItem } from '@mui/material';
 import { Button } from '..';
 import { toast } from 'react-toastify';
 import { Axios } from 'src/utils';
+import { addSupplier, addTukang } from 'src/API';
 
 const ModalAddNewTukang = ({ onClick }) => {
-  const [nama, setNama] = useState('');
-  const [ktp, setKtp] = useState('');
-  const [alamat, setAlamat] = useState('');
-  const [noHp, setNoHp] = useState('');
+  const { register, handleSubmit } = useForm();
+
   const [namaError, setNamaError] = useState(false);
   const [ktpError, setKtpError] = useState(false);
   const [alamatError, setAlamatError] = useState(false);
   const [noHpError, setNoHpError] = useState(false);
   const [typeError, setTypeError] = useState(false);
-  const [type, setType] = useState('');
 
-  const handleAddTukang = async () => {
-    const body = { nama_tukang: nama, no_ktp: ktp, alamat, no_hp: noHp };
+  const mutation = useMutation({
+    mutationFn: async (body) => {
+      addTukang(body);
+    },
+    onSuccess: () => {
+      toast.success('Berhasil Menambahkan Tukang');
+      onClick();
+    },
+  });
 
-    if (!nama || !ktp || !alamat || !noHp) {
-      if (!nama) setNamaError(true);
-      if (!ktp) setKtpError(true);
-      if (!alamat) setAlamatError(true);
-      if (!noHp) setNoHpError(true);
-      if (!type) setTypeError(true);
+  const handleAddTukang = async (data) => {
+    let hasErrors = false; // Flag to track if there are any errors
 
-      toast.error('Masih ada Inputan Kosong');
-      return;
+    // Perform individual field validations
+    if (data.nama_tukang === '') {
+      setNamaError(true);
+      hasErrors = true;
+    } else {
+      setNamaError(false);
     }
 
-    if (ktp.length !== 16) {
+    if (data.no_ktp.length !== 16) {
       setKtpError(true);
-      return;
+      hasErrors = true;
     } else {
       setKtpError(false);
     }
 
-    if (noHp.length < 10) {
+    if (data.alamat.trim() === '') {
+      setAlamatError(true);
+      hasErrors = true;
+    } else {
+      setAlamatError(false);
+    }
+
+    if (data.no_hp.length !== 10) {
       setNoHpError(true);
-      return;
+      hasErrors = true;
     } else {
       setNoHpError(false);
     }
 
-    await Axios.post('/tukang', body)
-      .then((res) => {
-        if (res.data.message === 'OK') {
-          toast.success('Berhasil Menambahkan Tukang');
-        }
-        onClick();
-      })
-      .catch((res) => {
-        console.log(res);
-        toast.error('Gagal Menambahkan Tukang');
-      });
+    if (data.type === '') {
+      setTypeError(true);
+      hasErrors = true;
+    } else {
+      setTypeError(false);
+    }
+
+    if (hasErrors) {
+      // There are errors, do not submit the form
+      return;
+    }
+
+    // No errors, submit the form
+    mutation.mutateAsync(data);
   };
 
   return (
@@ -66,11 +83,7 @@ const ModalAddNewTukang = ({ onClick }) => {
           id="outlined-required"
           label="Nama Sesuai KTP"
           fullWidth
-          value={nama}
-          onChange={(e) => {
-            setNama(e.target.value);
-            setNamaError(false); // Reset error when input changes
-          }}
+          {...register('nama_tukang')}
           error={namaError}
           helperText={namaError ? 'Nama tidak boleh kosong' : ''}
         />
@@ -81,11 +94,7 @@ const ModalAddNewTukang = ({ onClick }) => {
           id="outlined-required"
           label="No. KTP"
           fullWidth
-          value={ktp}
-          onChange={(e) => {
-            setKtp(e.target.value);
-            setKtpError(false); // Reset error when input changes
-          }}
+          {...register('no_ktp')}
           error={ktpError}
           helperText={ktpError ? 'No. KTP harus memiliki 16 karakter' : ''}
         />
@@ -95,12 +104,8 @@ const ModalAddNewTukang = ({ onClick }) => {
           required
           id="outlined-required"
           label="Alamat"
+          {...register('alamat')}
           fullWidth
-          value={alamat}
-          onChange={(e) => {
-            setAlamat(e.target.value);
-            setAlamatError(false); // Reset error when input changes
-          }}
           error={alamatError}
           helperText={alamatError ? 'Alamat tidak boleh kosong' : ''}
         />
@@ -110,12 +115,8 @@ const ModalAddNewTukang = ({ onClick }) => {
           required
           id="outlined-required"
           label="No. Handphone"
+          {...register('no_hp')}
           fullWidth
-          value={noHp}
-          onChange={(e) => {
-            setNoHp(e.target.value);
-            setNoHpError(false); // Reset error when input changes
-          }}
           error={noHpError}
           helperText={noHpError ? 'No. Handphone harus memiliki 10 karakter' : ''}
         />
@@ -126,14 +127,10 @@ const ModalAddNewTukang = ({ onClick }) => {
           <Select
             labelId="demo-simple-select-label"
             id="demo-simple-select"
-            value={type}
             label="Status"
             error={typeError}
             helperText={typeError}
-            onChange={(event) => {
-              setType(event.target.value);
-              setTypeError(false);
-            }}
+            {...register('type')}
           >
             <MenuItem value={'Tukang'}>Tukang</MenuItem>
             <MenuItem value={'Kernet'}>Kernet</MenuItem>
@@ -143,7 +140,7 @@ const ModalAddNewTukang = ({ onClick }) => {
 
       <Grid lg={8} />
       <Grid item xs={5} lg={4}>
-        <Button color="color" variant="contained" label="TAMBAH" size="large" onClick={handleAddTukang} />
+        <Button color="color" variant="contained" label="TAMBAH" size="large" onClick={handleSubmit(handleAddTukang)} />
       </Grid>
     </Grid>
   );

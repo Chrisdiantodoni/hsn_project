@@ -28,6 +28,8 @@ import Search from '@mui/icons-material/Search';
 import 'rsuite/dist/rsuite.css';
 import { Button, DatePicker, ModalAddNewUser, ModalComponent, ModalEditUser } from '../../components';
 import { Axios } from 'src/utils';
+import { useQuery } from '@tanstack/react-query';
+import { getUser } from 'src/API/auth';
 // components
 
 // ----------------------------------------------------------------------
@@ -37,7 +39,6 @@ export default function UserList() {
   const [search, setSearch] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [id, setId] = useState('');
-  const [data, setData] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -50,29 +51,21 @@ export default function UserList() {
   };
 
   useEffect(() => {
-    getUser(debouncedSearch, currentPage, isAddModalOpen);
-  }, [debouncedSearch, currentPage, isAddModalOpen]);
-
-  useEffect(() => {
     setDebouncedSearch(debouncedValue);
   }, [debouncedValue]);
 
-  const getUser = async (search = '', page = '') => {
-    try {
-      const response = await Axios.get(
-        `/auth?page=${page}&size=${pageSize}&column_name=nama_lengkap&query=${search}&roles=${search}`
-      );
-      const { totalPages } = response?.data?.data;
-      setTotalPages(totalPages);
-      console.log(response);
-      if (response.data.message === 'OK') {
-        const data = response?.data?.data?.result;
-        setData(data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const {
+    isLoading,
+    data: data,
+    error,
+  } = useQuery({
+    queryKey: ['users', { currentPage, pageSize, debouncedSearch }],
+    queryFn: async () => {
+      const response = await getUser(currentPage, pageSize, debouncedSearch);
+      return response;
+    },
+  });
+
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
     console.log(newPage);
@@ -85,7 +78,13 @@ export default function UserList() {
 
       <Container>
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
-          <Pagination count={totalPages} page={currentPage} shape="rounded" color="color" onChange={handlePageChange} />
+          <Pagination
+            count={data?.totalPages}
+            page={currentPage}
+            shape="rounded"
+            color="color"
+            onChange={handlePageChange}
+          />
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 650, border: '1px solid #ccc' }} aria-label="simple table">
               <TableHead>
@@ -97,7 +96,7 @@ export default function UserList() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {data.map((item, index) => (
+                {data?.data.result.map((item, index) => (
                   <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell>{item.id}</TableCell>
                     <TableCell>{item.nama_lengkap}</TableCell>
