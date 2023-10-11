@@ -206,11 +206,17 @@ export default function DetailProject() {
   };
 
   const handleUpahChange = (id, newUpah) => {
-    if (!isNaN(newUpah)) {
-      setListTukang((prevCards) => prevCards.map((card) => (card.id === id ? { ...card, upah: newUpah } : card)));
-    } else {
-      setListTukang((prevCards) => prevCards.map((card) => (card.id === id ? { ...card, upah: '' } : card)));
-    }
+    setListTukang((prevCards) =>
+      prevCards.map((card) => {
+        if (card.id === id) {
+          const updatedCard = { ...card };
+          updatedCard.upah_tukangs[0].upah = !isNaN(newUpah) ? newUpah : '';
+          return updatedCard;
+        } else {
+          return card;
+        }
+      })
+    );
   };
   const getProjectDetail = async () => {
     console.log(id);
@@ -393,7 +399,10 @@ export default function DetailProject() {
                     width: '100%',
                     height: '153.2px',
                     borderRadius: '20px',
-                    backgroundColor: '#EFEDED',
+                    backgroundColor: 'transparent',
+                    borderStyle: 'dotted',
+                    borderColor: '#000000',
+                    borderWidth: '2px',
                     '&:hover': {
                       opacity: [0.9, 0.8, 0.7],
                     },
@@ -419,7 +428,15 @@ export default function DetailProject() {
                     <Grid item lg={3} key={index}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         {typeof image.url.file_name === 'string' ? (
-                          <img src={image.url.file_name} alt={`Image ${index}`} width="auto" height="200" />
+                          <img
+                            src={image.url.file_name}
+                            alt={`Image ${index}`}
+                            width="auto"
+                            height="200"
+                            style={{
+                              objectFit: 'contain',
+                            }}
+                          />
                         ) : (
                           <img src={URL.createObjectURL(image.file)} alt={`Image ${index}`} width="auto" height="200" />
                         )}
@@ -446,18 +463,18 @@ export default function DetailProject() {
                   <Grid item lg={3} key={index}>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {typeof image.url.file_name === 'string' ? (
-                        <img src={image.url.file_name} alt={`Image ${index}`} width="auto" height="200" />
+                        <img
+                          src={image.url.file_name}
+                          alt={`Image ${index}`}
+                          width="auto"
+                          height="200"
+                          style={{
+                            objectFit: 'contain',
+                          }}
+                        />
                       ) : (
                         <img src={URL.createObjectURL(image.file)} alt={`Image ${index}`} width="auto" height="200" />
                       )}
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        label={'Delete'}
-                        onClick={() => handleDeleteImage(index)}
-                      >
-                        Delete
-                      </Button>
                     </div>
                   </Grid>
                 ))}
@@ -562,7 +579,7 @@ export default function DetailProject() {
                             size="small"
                             fullWidth
                             type="number"
-                            value={item.upah}
+                            value={item.upah_tukangs[0].upah}
                           />
                         </TableCell>
                         <TableCell>
@@ -924,14 +941,10 @@ export default function DetailProject() {
             <Grid item lg={4}>
               <Button label={'Print Kontrak'} size={'lg'} variant={'contained'} color={'color'} onClick={generatePdf} />
             </Grid>
-            {data?.status === 'approved' || roles == 'Admin' ? (
-              <></>
-            ) : (
-              <>
-                <Grid item lg={4} />
-              </>
-            )}
-            {roles === 'Owner' || roles === 'Pembelian' || 'Admin' ? (
+
+            {(data?.approvalType === 'Owner' && roles === 'Owner' && data?.status === 'request') ||
+            (data?.approvalType === 'Pembelian' && roles === 'Pembelian' && data?.status === 'request') ||
+            (data?.approvalType === 'Owner' && roles === 'Admin' && data?.status === 'request') ? (
               <>
                 <Grid item lg={4}>
                   <Button
@@ -952,7 +965,8 @@ export default function DetailProject() {
                   />
                 </Grid>
               </>
-            ) : roles === 'Admin' || roles === 'Project Manager' || roles === 'Admin Manager' ? (
+            ) : null}
+            {roles === 'Admin' || roles === 'Project Manager' || roles === 'Admin Manager' ? (
               <>
                 <Grid item lg={4}>
                   <Button label={'Batalkan'} size={'lg'} variant={'outlined'} color={'color'} />

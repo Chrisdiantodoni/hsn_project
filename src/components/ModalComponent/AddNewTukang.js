@@ -28,9 +28,8 @@ const ModalAddNewTukang = ({ onClick }) => {
   });
 
   const handleAddTukang = async (data) => {
-    let hasErrors = false; // Flag to track if there are any errors
+    let hasErrors = false;
 
-    // Perform individual field validations
     if (data.nama_tukang === '') {
       setNamaError(true);
       hasErrors = true;

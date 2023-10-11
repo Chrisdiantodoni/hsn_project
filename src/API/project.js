@@ -37,3 +37,16 @@ export const getProgress = async (search, page, size, startDate, endDate) => {
     throw error;
   }
 };
+
+export const addProject = async (body) => {
+  try {
+    const response = await Axios.post('/project', body, {
+      headers: {
+        'Content-Type': 'multipart-form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

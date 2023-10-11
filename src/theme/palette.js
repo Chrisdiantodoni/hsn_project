@@ -20,7 +20,7 @@ const PRIMARY = {
   lighter: '#D1E9FC',
   light: '#76B0F1',
   main: '#3f50b5',
-  dark: '#ff7f00',
+  dark: '#530710',
   darker: '#061B64',
   contrastText: '#fff',
 };
@@ -73,8 +73,8 @@ const ERROR = {
 const COLOR = {
   lighter: '#D1E9FC',
   light: '#76B0F1',
-  main: '#bc251a',
-  dark: '#ff7f00',
+  main: '#a60f21',
+  dark: '#740A17',
   darker: '#061B64',
   contrastText: '#fff',
 };

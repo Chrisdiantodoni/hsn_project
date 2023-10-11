@@ -264,7 +264,7 @@ export default function Dashboard() {
     <ThemeProvider theme={defaultTheme}>
       <Box sx={{ display: 'flex' }}>
         <CssBaseline />
-        <AppBar position="fixed" open={open} style={{ backgroundColor: '#bc251a' }}>
+        <AppBar position="fixed" open={open} style={{ backgroundColor: '#a60f21' }}>
           <Toolbar>
             <IconButton
               edge="start"

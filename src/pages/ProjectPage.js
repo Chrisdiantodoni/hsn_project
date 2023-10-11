@@ -1,13 +1,10 @@
 import { Helmet } from 'react-helmet-async';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 // @mui
 import {
   Box,
-  Container,
   Stack,
-  Typography,
   Table,
   TableBody,
   TableCell,
@@ -27,11 +24,9 @@ import {
 import { DatePicker } from '@mui/x-date-pickers';
 import { Link, useNavigate } from 'react-router-dom';
 import Search from '@mui/icons-material/Search';
-import { DateRangePicker } from 'rsuite';
 import 'rsuite/dist/rsuite.css';
 import { Button } from '../components';
-import { Axios, currency } from 'src/utils';
-import { toast } from 'react-toastify';
+import { currency } from 'src/utils';
 import moment from 'moment';
 import { useDebounce } from 'src/hooks/useDebounce';
 // components
@@ -41,7 +36,7 @@ import { getProject } from '../API';
 
 export default function ProjectPage() {
   const navigate = useNavigate();
-  // const [data, setData] = useState([]);
+  const queryClient = useQueryClient();
   const options = ['Ditolak', 'Pending', 'Disetujui'];
   const [search, setSearch] = useState('');
   const [selectedOption, setSelectedOption] = useState('');
@@ -85,6 +80,10 @@ export default function ProjectPage() {
   });
 
   if (error) return <div>An error occurred: {error.message}</div>;
+
+  queryClient.invalidateQueries({
+    queryKey: 'result',
+  });
 
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);

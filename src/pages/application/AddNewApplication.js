@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
 // @mui
+import { useMutation } from '@tanstack/react-query';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 import Stack from '@mui/material/Stack';
-import { useTheme, styled } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 import {
   Grid,
-  Container,
   Typography,
   Paper,
-  Checkbox,
   TableRow,
   TableCell,
   Table,
@@ -20,26 +19,12 @@ import {
   TableBody,
   Box,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import { Add, Delete } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers';
-import Search from '@mui/icons-material/Search';
-// components
-import moment from 'moment';
-import ProfileImg from '../../Assets/ProfileImg.jpg';
 import { Axios, currency } from 'src/utils';
-import {
-  Card,
-  Dropdown,
-  TextInput,
-  Button,
-  ModalComponent,
-  ModalCheckStock,
-  EditStaff,
-  ModalCheckTukang,
-} from '../../components';
+import { Button, ModalComponent, ModalCheckStock, ModalCheckTukang } from '../../components';
 import ModalCheckSupplier from 'src/components/ModalComponent/CheckSupplier';
 import { toast } from 'react-toastify';
+import { addProject } from 'src/API';
 
 // ----------------------------------------------------------------------
 
@@ -52,32 +37,11 @@ const Item = styled(Paper)(({ theme }) => ({
 }));
 
 export default function AddNewApplication() {
-  const theme = useTheme();
-  const [search, setSearch] = useState('');
   const [addModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCards, setSelectedCards] = useState([]);
   const [isModalSupplier, setIsModalSupplier] = useState(false);
   const [isModalTukang, setIsAddModalTukang] = useState(false);
-
-  const [editModalOpen, setIsEditModalOpen] = useState(false);
-  const roles = 'Admin';
-  const [jam, setJam] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-
-  useEffect(() => {
-    const delaySearch = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 1000);
-
-    return () => {
-      clearTimeout(delaySearch);
-    };
-  }, [searchTerm]);
-
-  useEffect(() => {
-    console.log('Search term:', debouncedSearchTerm);
-  }, [debouncedSearchTerm]);
+  const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState('');
   const options = ['HO', 'GS', 'GH'];
   const optionsKerjaan = ['Borongan', 'Harian'];
@@ -226,6 +190,19 @@ export default function AddNewApplication() {
     }
   };
 
+  const mutation = useMutation({
+    mutationFn: (formData) => {
+      return addProject(formData);
+    },
+    onSuccess: () => {
+      toast.success('Project Berhasil diajukan');
+      navigate('/dashboard/app');
+    },
+    onError: () => {
+      toast.error('Project tidak dapat diajukan');
+    },
+  });
+
   const handleAddNewProject = async (e) => {
     e.preventDefault();
     const totalHarga = parseInt(totalHargaJob) + totalHargaStock;
@@ -263,23 +240,7 @@ export default function AddNewApplication() {
     });
     formData.append('list_tukang', JSON.stringify(listTukang));
 
-    for (var pair of formData.entries()) {
-      console.log(pair[0] + ', ' + pair[1]);
-    }
-    Axios.post('/project', formData, {
-      headers: {
-        'Content-Type': 'multipart-form-data',
-      },
-    })
-      .then((res) => {
-        if (res) {
-          toast.success('Project Berhasil Diajukan');
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        toast.error('Project Gagal Ditambahkan');
-      });
+    mutation.mutateAsync(formData);
   };
   const getStock = async () => {
     try {

@@ -23,14 +23,6 @@ import { Axios, currency } from 'src/utils';
 import { Button } from '@mui/material';
 import { toast } from 'react-toastify';
 
-const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
-  ...theme.typography.body2,
-  padding: theme.spacing(1),
-  textAlign: 'center',
-  color: theme.palette.text.secondary,
-}));
-
 export default function DetailProjectProgress() {
   const { id } = useParams();
   const [dataProject, setDataProject] = useState({});
@@ -124,7 +116,9 @@ export default function DetailProjectProgress() {
   const handleHitunganUpah = (check_in, tukangId) => {
     const checkIn = moment(check_in);
     const checkInHour = checkIn.hours();
-    const hourlyRate = parseFloat(dataProject?.list_tukangs?.find((tukang) => tukang.id === tukangId)?.upah || 0);
+    const hourlyRate = parseFloat(
+      dataProject?.list_tukangs?.find((tukang) => tukang.id === tukangId)?.upah_tukangs[0]?.upah || 0
+    );
     let paymentForEntry;
 
     if (checkInHour >= 12) {
@@ -372,7 +366,13 @@ export default function DetailProjectProgress() {
                       <TextField id="outlined" label="Nama Tukang" size="large" value={item?.nama_tukang} disabled />
                     </Grid>
                     <Grid item lg={6}>
-                      <TextField id="outlined" label="Upah Tukang" size="large" value={currency(item?.upah)} disabled />
+                      <TextField
+                        id="outlined"
+                        label="Upah Tukang"
+                        size="large"
+                        value={currency(item?.upah_tukangs[0]?.upah)}
+                        disabled
+                      />
                     </Grid>
                   </Grid>
                   <Divider
