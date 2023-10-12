@@ -64,11 +64,21 @@ export default function Router() {
         { path: 'app', element: <ProjectPage /> },
         {
           path: 'addapplication',
-          element: <PrivateRoute element={<AddNewApplication />} allowedRoles={['Admin', 'Requester']} />,
+          element: (
+            <PrivateRoute
+              element={<AddNewApplication />}
+              allowedRoles={['Admin', 'Requester', 'Admin Project', 'Pembelian', 'Owner']}
+            />
+          ),
         },
         {
           path: 'detailproject/:id',
-          element: <PrivateRoute element={<DetailProject />} allowedRoles={['Admin', 'Requester']} />,
+          element: (
+            <PrivateRoute
+              element={<DetailProject />}
+              allowedRoles={['Admin', 'Requester', 'Admin Project', 'Pembelian', 'Owner']}
+            />
+          ),
         },
 
         { path: 'supplier', element: <Supplier /> },
@@ -78,23 +88,48 @@ export default function Router() {
         },
         {
           path: 'projectprogress-daily/:id',
-          element: <PrivateRoute element={<DetailProjectProgressDaily />} allowedRoles={['Admin', 'Requester']} />,
+          element: (
+            <PrivateRoute
+              element={<DetailProjectProgressDaily />}
+              allowedRoles={['Admin', 'Requester', 'Admin Project', 'Pembelian']}
+            />
+          ),
         },
         {
           path: 'projectprogress-weekly/:id',
-          element: <PrivateRoute element={<DetailProjectProgressWeekly />} allowedRoles={['Admin', 'Requester']} />,
+          element: (
+            <PrivateRoute
+              element={<DetailProjectProgressWeekly />}
+              allowedRoles={['Admin', 'Requester', 'Admin Project', 'Pembelian']}
+            />
+          ),
         },
         {
           path: 'paywages',
-          element: <PrivateRoute element={<PayWagesPage />} allowedRoles={['Admin', 'Requester']} />,
+          element: (
+            <PrivateRoute
+              element={<PayWagesPage />}
+              allowedRoles={['Admin', 'Requester', 'Admin Project', 'Pembelian']}
+            />
+          ),
         },
         {
           path: 'paywages-weekly/:id',
-          element: <PrivateRoute element={<DetailPayWagesWeekly />} allowedRoles={['Admin', 'Requester']} />,
+          element: (
+            <PrivateRoute
+              element={<DetailPayWagesWeekly />}
+              allowedRoles={['Admin', 'Requester', 'Admin Project', 'Pembelian']}
+            />
+          ),
         },
         {
           path: 'paywages-daily/:id',
-          element: <PrivateRoute element={<DetailPayWagesDaily />} allowedRoles={['Admin', 'Requester']} />,
+          element: (
+            <PrivateRoute
+              element={<DetailPayWagesDaily />}
+              allowedRoles={['Admin', 'Requester', 'Admin Project', 'Pembelian']}
+            />
+          ),
         },
         { path: 'user', element: <UserList /> },
         { path: 'stock', element: <Stock /> },

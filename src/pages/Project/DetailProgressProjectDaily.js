@@ -29,6 +29,7 @@ export default function DetailProjectProgress() {
   const [historyPay, setHistoryPay] = useState([]);
   const [tukangTimes, setTukangTimes] = useState({});
   const [totalUpahPerTukang, setTotalUpahPerTukang] = useState({});
+  const [status, setStatus] = useState('');
   const [addedTimeEntries, setAddedTimeEntries] = useState({});
   const getProgress = async () => {
     try {
@@ -346,6 +347,7 @@ export default function DetailProjectProgress() {
           <Grid item lg={3}>
             <TextField id="outlined" label="Periode" size="large" value={moment().format('DD MMM YYYY')} disabled />
           </Grid>
+
           <Grid item lg={3}>
             <TextField
               id="outlined"

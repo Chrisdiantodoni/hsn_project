@@ -56,7 +56,7 @@ export default function DetailProjectProgress() {
 
   const getHistoryPay = async () => {
     try {
-      const response = await Axios.get(`/pay/history/${id}`);
+      const response = await Axios.get(`/pay/history/${dataProject?.project?.id}`);
       if (response.data.message == 'OK') {
         const data = response?.data?.data;
         setHistoryPay(data);
@@ -69,7 +69,7 @@ export default function DetailProjectProgress() {
 
   useEffect(() => {
     getHistoryPay();
-  }, []);
+  }, [dataProject]);
 
   const calculateTotalPaymentByIndex = (index) => {
     const payment = historyPay[index];
@@ -89,7 +89,7 @@ export default function DetailProjectProgress() {
       if (isNaN(percentage)) {
         return total;
       }
-      const itemHarga = item.harga * item.qty * (percentage / 100);
+      const itemHarga = item.harga * item.qty * percentage;
       return total + itemHarga;
     }, 0);
 
@@ -153,6 +153,11 @@ export default function DetailProjectProgress() {
     });
 
     return totalPaid;
+  };
+
+  const totalRemainingPayment = () => {
+    const total = calculateTotalUpahForAllTukangs() - calculateTotalAmountPaid();
+    return total;
   };
 
   return (
@@ -240,7 +245,7 @@ export default function DetailProjectProgress() {
                           <Typography>{moment(item.createdAt).format('DD MMMM YYYY')}</Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography>{currency(calculateTotalPaymentByIndex(idx))}</Typography>
+                          <Typography>{currency(item.total)}</Typography>
                         </TableCell>
                         <TableCell>
                           <Button onClick={handleRincianPembayaran} color="color" variant="contained">
@@ -283,7 +288,7 @@ export default function DetailProjectProgress() {
                           <Typography>{item.name}</Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography>{item.percentage * 100}%</Typography>
+                          <Typography>{item.pay_detail?.percentage * 100}%</Typography>
                         </TableCell>
                         <TableCell>
                           <Typography>{currency(item.qty)}</Typography>
@@ -303,14 +308,7 @@ export default function DetailProjectProgress() {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography>
-                            {currency(
-                              item.harga *
-                                item.qty *
-                                (percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage /
-                                  100)
-                            )}
-                          </Typography>
+                          <Typography>{currency(item.harga * item.qty * item.pay_detail.percentage)}</Typography>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -319,21 +317,23 @@ export default function DetailProjectProgress() {
               </TableContainer>
             </Grid>
             <Grid item lg={6}>
-              <TableContainer component={Paper} sx={{ minWidth: 650, border: '1px solid #ccc' }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>NAMA TUKANG</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {dataProject.list_tukangs?.map((item) => (
+              <TableContainer component={Paper} sx={{ border: '1px solid #ccc' }}>
+                <Table>
+                  <TableHead>
                     <TableRow>
-                      <TableCell>{item.id}</TableCell>
-                      <TableCell>{item.nama_tukang}</TableCell>
+                      <TableCell>ID</TableCell>
+                      <TableCell>NAMA TUKANG</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
+                  </TableHead>
+                  <TableBody>
+                    {dataProject.list_tukangs?.map((item) => (
+                      <TableRow>
+                        <TableCell>{item.id}</TableCell>
+                        <TableCell>{item.nama_tukang}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </TableContainer>
             </Grid>
 
@@ -368,7 +368,7 @@ export default function DetailProjectProgress() {
             </Grid>
             <Grid item lg={2} sx={{ py: 2 }}>
               <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
-                Rp. {currency(calculateTotalAmountPaid() - calculateTotalUpahForAllTukangs())}
+                Rp. {currency(totalRemainingPayment())}
               </Typography>
             </Grid>
             <Grid item lg={5} />

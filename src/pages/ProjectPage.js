@@ -35,6 +35,8 @@ import { getProject } from '../API';
 // ----------------------------------------------------------------------
 
 export default function ProjectPage() {
+  const dataUser = localStorage.getItem('dataUser');
+  const roles = JSON.parse(dataUser)?.roles;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const options = ['Ditolak', 'Pending', 'Disetujui'];
@@ -193,10 +195,11 @@ export default function ProjectPage() {
               </FormControl>
             </Grid>
             <Grid lg={4} />
-
-            <Grid item xs={12} sm={6} md={3} lg={4}>
-              <Button color="color" variant="contained" size="large" label="TAMBAH" onClick={handleAddApplication} />
-            </Grid>
+            {roles === 'Manager Project' || 'Admin' ? (
+              <Grid item xs={12} sm={6} md={3} lg={4}>
+                <Button color="color" variant="contained" size="large" label="TAMBAH" onClick={handleAddApplication} />
+              </Grid>
+            ) : null}
           </Grid>
         </Stack>
       </Box>

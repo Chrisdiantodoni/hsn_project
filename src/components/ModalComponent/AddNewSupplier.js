@@ -22,6 +22,7 @@ const ModalAddNewSupplier = ({ onClick }) => {
     },
     onSuccess: () => {
       toast.success('Berhasil menambahkan supplier');
+      onClick();
     },
   });
 
@@ -42,9 +43,7 @@ const ModalAddNewSupplier = ({ onClick }) => {
       setAlamatError(false);
     }
 
-    if (data === '') {
-      addSupplierMutation.mutateAsync(data);
-    }
+    addSupplierMutation.mutateAsync(data);
   };
 
   return (

@@ -211,15 +211,7 @@ export default function AddNewApplication() {
     const tukangIdArray = listTukang.map((item) => {
       return item.id;
     });
-    let approvalType = 'Owner';
-    for (const selectedItem of selectedCards) {
-      const stockStatus = checkingStock(selectedItem);
 
-      if (stockStatus === 'Beli') {
-        approvalType = 'Pembelian';
-        break;
-      }
-    }
     const tukangId = tukangIdArray.join(',');
     const formData = new FormData();
     formData.append('nama_project', project);
@@ -231,7 +223,7 @@ export default function AddNewApplication() {
     formData.append('tukangId', tukangId);
     formData.append('type', selectKerjaan);
     formData.append('userId', id);
-    formData.append('approvalType', approvalType);
+    formData.append('approvalType', 'Admin Project');
     formData.append('Beli', 'Beli');
     formData.append('list_job', JSON.stringify(listJob));
     formData.append('list_stock', JSON.stringify(selectedCards));

@@ -10,7 +10,6 @@ import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Grid,
-  Container,
   Typography,
   Paper,
   TableRow,
@@ -20,7 +19,10 @@ import {
   TableContainer,
   TableBody,
   Box,
-  Divider,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { toast } from 'react-toastify';
 import { DatePicker, TimePicker, MobileTimePicker } from '@mui/x-date-pickers';
@@ -42,11 +44,13 @@ export default function DetailProjectProgress() {
   const [historyPay, setHistoryPay] = useState([]);
   const [percentageArray, setPercentageArray] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [statusPenyelesaian, setStatusPenyelesaian] = useState('');
   const getProgress = async () => {
     try {
       const response = await Axios.get(`/progress/weekly/${id}`);
       if (response.data.message === 'OK') {
         setDataProject(response?.data?.data);
+        setStatusPenyelesaian(dataProject?.status_penyelesaian);
       }
     } catch (error) {
       console.log(error);
@@ -137,19 +141,20 @@ export default function DetailProjectProgress() {
           id: progress.id,
           name: progress.name,
           qty: progress.qty,
-          nominal: totalPayment,
-          harga: totalPayment,
-          percentage: percentageValue, // Use the extracted percentage value
+          nominal: progress.nominal,
+          harga: progress.harga,
+          percentage: percentageValue,
           hasil_akhir: percentageValue === 1 ? 'selesai' : 'belum selesai',
         };
         return paymentData;
       });
       const formData = new FormData();
       formData.append('tukangId', dataProject?.tukangId);
-      formData.append('total', calculateTotalUpahForAllTukangs());
+      formData.append('total', handleRemainingPayment());
       formData.append('projectId', id);
       formData.append('status', 'Belum');
-      formData.append('approvalType', 'Accounting');
+      formData.append('approvalType', 'Admin Manager');
+      formData.append('status_penyelesaian', statusPenyelesaian);
       [...uploadedImages].forEach((image) => {
         formData.append('list_image', image);
       });
@@ -212,6 +217,11 @@ export default function DetailProjectProgress() {
       newDataProject.list_jobs[idx].harga = newValue;
       setDataProject(newDataProject);
     }
+  };
+
+  const handleRemainingPayment = () => {
+    const remainingPayment = calculateTotalUpahForAllTukangs() - calculateTotalAmountPaid();
+    return remainingPayment;
   };
 
   return (
@@ -298,11 +308,11 @@ export default function DetailProjectProgress() {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item lg={3} />
-          <Grid item lg={3} />
+          <Grid item lg={6} />
           <Grid item lg={3}>
             <TextField id="outlined" label="Periode" size="large" value={moment().format('DD MMM YYYY')} disabled />
           </Grid>
+
           <Grid item lg={3}>
             <TextField
               id="outlined"
@@ -313,6 +323,23 @@ export default function DetailProjectProgress() {
               disabled
               InputLabelProps={{ shrink: true }}
             />
+          </Grid>
+          <Grid item lg={6} />
+
+          <Grid item lg={3}>
+            <FormControl fullWidth>
+              <InputLabel id="demo-simple-select-label">Status Penyelesaian</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={statusPenyelesaian}
+                label="Status Penyelesaian"
+                onChange={(e) => setStatusPenyelesaian(e.target.value)}
+              >
+                <MenuItem value={'Selesai'}>Sudah selesai</MenuItem>
+                <MenuItem value={'Belum Selesai'}>Belum selesai</MenuItem>
+              </Select>
+            </FormControl>
           </Grid>
 
           <Grid item lg={12}>
@@ -448,21 +475,23 @@ export default function DetailProjectProgress() {
             </TableContainer>
           </Grid>
           <Grid item lg={6}>
-            <TableContainer component={Paper} sx={{ minWidth: 650, border: '1px solid #ccc' }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>NAMA TUKANG</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {dataProject.list_tukangs?.map((item) => (
+            <TableContainer component={Paper} sx={{ border: '1px solid #ccc' }}>
+              <Table>
+                <TableHead>
                   <TableRow>
-                    <TableCell>{item.id}</TableCell>
-                    <TableCell>{item.nama_tukang}</TableCell>
+                    <TableCell>ID</TableCell>
+                    <TableCell>NAMA TUKANG</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
+                </TableHead>
+                <TableBody>
+                  {dataProject.list_tukangs?.map((item) => (
+                    <TableRow>
+                      <TableCell>{item.id}</TableCell>
+                      <TableCell>{item.nama_tukang}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </TableContainer>
           </Grid>
 
@@ -497,16 +526,18 @@ export default function DetailProjectProgress() {
           </Grid>
           <Grid item lg={2} sx={{ py: 2 }}>
             <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
-              Rp. {currency(calculateTotalAmountPaid() - calculateTotalUpahForAllTukangs())}
+              Rp. {currency(handleRemainingPayment())}
             </Typography>
           </Grid>
           <Grid item lg={5} />
           <Grid item lg={5} />
-          <Grid item lg={2} sx={{ py: 2 }}>
-            <Button variant="contained" color="color" size="large" fullWidth onClick={handlePayment}>
-              AJUKAN PEMBAYARAN
-            </Button>
-          </Grid>
+          {dataProject.status_penyelesaian === 'Belum Selesai' ? (
+            <Grid item lg={2} sx={{ py: 2 }}>
+              <Button variant="contained" color="color" size="large" fullWidth onClick={handlePayment}>
+                AJUKAN PEMBAYARAN
+              </Button>
+            </Grid>
+          ) : null}
         </Grid>
       </Box>
     </>

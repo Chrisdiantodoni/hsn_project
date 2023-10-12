@@ -51,7 +51,7 @@ const ModalAddNewTukang = ({ onClick }) => {
       setAlamatError(false);
     }
 
-    if (data.no_hp.length !== 10) {
+    if (data.no_hp.length < 10) {
       setNoHpError(true);
       hasErrors = true;
     } else {
@@ -66,11 +66,9 @@ const ModalAddNewTukang = ({ onClick }) => {
     }
 
     if (hasErrors) {
-      // There are errors, do not submit the form
       return;
     }
 
-    // No errors, submit the form
     mutation.mutateAsync(data);
   };
 

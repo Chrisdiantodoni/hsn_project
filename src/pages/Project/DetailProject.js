@@ -302,12 +302,22 @@ export default function DetailProject() {
 
   const handleApproveProject = async (e) => {
     e.preventDefault();
+    let approvalType = 'Owner';
+    if (roles === 'Admin Project') {
+      for (const selectedItem of selectedCards) {
+        const stockStatus = checkingStock(selectedItem);
+        if (stockStatus === 'Beli') {
+          approvalType = 'Pembelian';
+          break;
+        }
+      }
+    }
     const dataUser = JSON.parse(localStorage.getItem('dataUser'));
-    const role = await dataUser?.roles;
     const body = {
-      typeApproval: role === 'Pembelian' ? 'Owner' : 'Owner',
+      typeApproval: approvalType,
       comment: comment,
       userId: dataUser?.id,
+      roles: roles,
     };
     console.log(body);
     await Axios.put(`/approval/approve/${id}`, body)
@@ -942,7 +952,8 @@ export default function DetailProject() {
               <Button label={'Print Kontrak'} size={'lg'} variant={'contained'} color={'color'} onClick={generatePdf} />
             </Grid>
 
-            {(data?.approvalType === 'Owner' && roles === 'Owner' && data?.status === 'request') ||
+            {(data?.approvalType === 'Admin Project' && roles === 'Admin Project' && data?.status === 'request') ||
+            (data?.approvalType === 'Owner' && roles === 'Owner' && data?.status === 'request') ||
             (data?.approvalType === 'Pembelian' && roles === 'Pembelian' && data?.status === 'request') ||
             (data?.approvalType === 'Owner' && roles === 'Admin' && data?.status === 'request') ? (
               <>
@@ -966,7 +977,9 @@ export default function DetailProject() {
                 </Grid>
               </>
             ) : null}
-            {roles === 'Admin' || roles === 'Project Manager' || roles === 'Admin Manager' ? (
+            {roles === 'Admin' ||
+            roles === 'Project Manager' ||
+            (roles === 'Admin Project' && data?.status === 'approved') ? (
               <>
                 <Grid item lg={4}>
                   <Button label={'Batalkan'} size={'lg'} variant={'outlined'} color={'color'} />

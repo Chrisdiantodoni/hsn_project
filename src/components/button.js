@@ -1,9 +1,10 @@
 import React from 'react';
 import Button from '@mui/material/Button';
 
-const MaterialUIButton = ({ color, variant, label, onClick, size, align }) => {
+const MaterialUIButton = ({ color, variant, label, onClick, size, align, disabled }) => {
   return (
     <Button
+      disabled={disabled}
       color={color}
       variant={variant}
       onClick={onClick}

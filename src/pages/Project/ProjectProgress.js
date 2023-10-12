@@ -94,7 +94,7 @@ export default function ProjectPage() {
                   <TableCell>Mulai</TableCell>
                   <TableCell>Selesai</TableCell>
                   <TableCell>Tanggal Pengajuan</TableCell>
-                  <TableCell>Status</TableCell>
+                  <TableCell>Status Penyelesaian</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
               </TableHead>
@@ -107,13 +107,7 @@ export default function ProjectPage() {
                     <TableCell>{moment(item.start).format('DD MMMM YYYY')}</TableCell>
                     <TableCell>{moment(item.end).format('DD MMMM YYYY')}</TableCell>
                     <TableCell>{moment(item.createdAt).format('DD MMMM YYYY')}</TableCell>
-                    <TableCell
-                      sx={{
-                        color: item.status === 'reject' ? '#E84040' : item.status === 'approve' ? '#028617' : '#000000',
-                      }}
-                    >
-                      {item.status == 'request' ? 'Pending' : item.status === 'reject' ? 'Ditolak' : 'Disetujui'}
-                    </TableCell>
+                    <TableCell>{item.status_penyelesaian}</TableCell>
                     <TableCell>
                       <Link
                         to={
