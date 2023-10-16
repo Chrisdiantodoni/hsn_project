@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 // @mui
 import moment from 'moment';
 import TextField from '@mui/material/TextField';
@@ -28,6 +28,8 @@ import { toast } from 'react-toastify';
 import { DatePicker, TimePicker, MobileTimePicker } from '@mui/x-date-pickers';
 import { Axios, currency } from 'src/utils';
 import { Button } from '@mui/material';
+import { HistoryPayModal } from 'src/components/pay';
+import { ModalComponent } from 'src/components';
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -45,6 +47,7 @@ export default function DetailProjectProgress() {
   const [percentageArray, setPercentageArray] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusPenyelesaian, setStatusPenyelesaian] = useState('');
+  const [historyId, setHistoryId] = useState('');
   const getProgress = async () => {
     try {
       const response = await Axios.get(`/progress/weekly/${id}`);
@@ -74,25 +77,16 @@ export default function DetailProjectProgress() {
     getHistoryPay();
   }, []);
 
-  const calculateTotalPaymentByIndex = (index) => {
-    const payment = historyPay[index];
-
-    if (!payment) {
-      return 0;
-    }
-
-    return payment.pay_details.reduce((total, detail) => {
-      return total + detail.nominal;
-    }, 0);
-  };
-
   const calculateTotalUpahForAllTukangs = () => {
     const totalUpah = dataProject?.list_jobs?.reduce((total, item, index) => {
       const percentage = parseFloat(percentageArray[index]?.percentage || '0');
       if (isNaN(percentage)) {
         return total;
       }
-      const itemHarga = item.harga * item.qty * (percentage / 100);
+      const itemHarga =
+        dataProject?.status_penyelesaian === 'Belum selesai'
+          ? item.harga * item.qty * (percentage / 100)
+          : item.harga * item.qty * percentage;
       return total + itemHarga;
     }, 0);
 
@@ -133,21 +127,31 @@ export default function DetailProjectProgress() {
   console.log(percentageArray);
   const handlePayment = () => {
     try {
-      const paymentDataArray = dataProject?.list_jobs.map((progress) => {
+      const updatedPercentageArray = dataProject.list_jobs.map((progress) => {
         const percentageObj = percentageArray.find((item) => item.id === progress.id);
         const percentageValue = parseFloat(percentageObj?.percentage || 0) / 100;
+        return {
+          id: progress.id,
+          percentage: percentageValue,
+        };
+      });
+
+      const paymentDataArray = updatedPercentageArray.map((percentageObj, index) => {
+        const progress = dataProject.list_jobs[index];
+        const percentageValue = percentageObj.percentage;
         const totalPayment = percentageValue * progress.qty * progress.harga;
-        const paymentData = {
+
+        return {
           id: progress.id,
           name: progress.name,
           qty: progress.qty,
-          nominal: progress.nominal,
+          nominal: totalPayment,
           harga: progress.harga,
           percentage: percentageValue,
           hasil_akhir: percentageValue === 1 ? 'selesai' : 'belum selesai',
         };
-        return paymentData;
       });
+
       const formData = new FormData();
       formData.append('tukangId', dataProject?.tukangId);
       formData.append('total', handleRemainingPayment());
@@ -186,16 +190,17 @@ export default function DetailProjectProgress() {
       )
     );
   };
-  const handleRincianPembayaran = () => {
-    setIsModalOpen(true);
+
+  const navigate = useNavigate();
+  const handleRincianPembayaran = (item) => {
+    navigate(`/dashboard/paywages-weekly/${item}`);
   };
 
   const calculateTotalAmountPaid = () => {
     let totalPaid = 0;
 
     historyPay.forEach((item, idx) => {
-      const payment = calculateTotalPaymentByIndex(idx);
-      totalPaid += payment;
+      totalPaid += item.total;
     });
 
     return totalPaid;
@@ -368,10 +373,10 @@ export default function DetailProjectProgress() {
                         <Typography>{moment(item.createdAt).format('DD MMMM YYYY')}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography>{currency(calculateTotalPaymentByIndex(idx))}</Typography>
+                        <Typography>{currency(item.total)}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Button onClick={handleRincianPembayaran} color="color" variant="contained">
+                        <Button onClick={() => handleRincianPembayaran(item.id)} color="color" variant="contained">
                           Lihat Rincian
                         </Button>
                       </TableCell>
@@ -417,16 +422,20 @@ export default function DetailProjectProgress() {
                             label={'%PROGRESS'}
                             type="number"
                             value={
-                              percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage || ''
+                              dataProject?.status_penyelesaian === 'Belum selesai'
+                                ? percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage ||
+                                  ''
+                                : 100
                             }
                             onChange={(e) => {
                               const newValue = parseInt(e.target.value, 10);
                               if (!isNaN(newValue) && newValue <= 100) {
-                                handlePercentageChange(item.id, newValue); // Update by id
+                                handlePercentageChange(item.id, newValue);
                               } else if (e.target.value === '') {
-                                handlePercentageChange(item.id, ''); // Update by id
+                                handlePercentageChange(item.id, '');
                               }
                             }}
+                            disabled={dataProject?.status_penyelesaian === 'Belum selesai' ? false : true}
                           ></TextField>
                         </Typography>
                       </TableCell>
@@ -439,6 +448,7 @@ export default function DetailProjectProgress() {
                           value={item.qty}
                           onChange={(e) => handleQtyChange(e, idx)}
                           label="Qty"
+                          disabled={dataProject?.status_penyelesaian === 'Belum selesai' ? false : true}
                         />
                       </TableCell>
                       <TableCell>
@@ -447,6 +457,7 @@ export default function DetailProjectProgress() {
                           value={item.harga}
                           onChange={(e) => handleHargaChange(e, idx)}
                           label="Harga"
+                          disabled={dataProject?.status_penyelesaian === 'Belum selesai' ? false : true}
                         />
                       </TableCell>
                       <TableCell>
@@ -464,7 +475,10 @@ export default function DetailProjectProgress() {
                           {currency(
                             item.harga *
                               item.qty *
-                              (percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage / 100)
+                              (dataProject?.status_penyelesaian === 'Belum selesai'
+                                ? percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage /
+                                  100
+                                : percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage)
                           )}
                         </Typography>
                       </TableCell>
@@ -539,6 +553,13 @@ export default function DetailProjectProgress() {
             </Grid>
           ) : null}
         </Grid>
+        <ModalComponent
+          open={isModalOpen}
+          close={() => setIsModalOpen(false)}
+          title={`Rincian Pembayaran #${historyId}`}
+        >
+          <HistoryPayModal onClick={setIsModalOpen} item={historyPay.find((find) => find.id === historyId)} />
+        </ModalComponent>
       </Box>
     </>
   );

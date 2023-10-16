@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 // @mui
 import moment from 'moment';
 import TextField from '@mui/material/TextField';
@@ -16,6 +16,10 @@ import {
   TableContainer,
   TableBody,
   Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Divider,
 } from '@mui/material';
 import { DatePicker, MobileTimePicker } from '@mui/x-date-pickers';
@@ -28,9 +32,9 @@ export default function DetailProjectProgress() {
   const [dataProject, setDataProject] = useState({});
   const [historyPay, setHistoryPay] = useState([]);
   const [tukangTimes, setTukangTimes] = useState({});
-  const [totalUpahPerTukang, setTotalUpahPerTukang] = useState({});
-  const [status, setStatus] = useState('');
   const [addedTimeEntries, setAddedTimeEntries] = useState({});
+  const [statusPenyelesaian, setStatusPenyelesaian] = useState('');
+
   const getProgress = async () => {
     try {
       const response = await Axios.get(`/progress/daily/${id}`);
@@ -51,8 +55,9 @@ export default function DetailProjectProgress() {
     try {
       const response = await Axios.get(`/pay/history/${id}`);
       if (response.data.message == 'OK') {
-        const data = response.data;
+        const data = response.data?.data;
         setHistoryPay(data);
+        console.log(data);
       }
       console.log(response);
     } catch (error) {
@@ -133,8 +138,8 @@ export default function DetailProjectProgress() {
 
   const handleTotalUpah = (tukangId) => {
     const tukangTimeEntries = tukangTimes[tukangId] || [];
-    const hourlyRate = parseFloat(dataProject?.list_tukangs?.find((tukang) => tukang.id === tukangId)?.upah || 0);
-
+    const hourlyRate = dataProject?.list_tukangs?.find((tukang) => tukang.id === tukangId)?.upah_tukangs[0]?.upah || 0;
+    console.log(tukangTimeEntries, hourlyRate);
     const totalUpah = tukangTimeEntries.reduce((acc, timeEntry) => {
       const checkIn = moment(timeEntry.check_in);
       const checkInHour = checkIn.hours();
@@ -220,6 +225,10 @@ export default function DetailProjectProgress() {
     const newImages = uploadedImages.filter((_, index) => index !== indexToDelete);
     setUploadedImages(newImages);
   };
+  const navigate = useNavigate();
+  const handleRincianPembayaran = (item) => {
+    navigate(`/dashboard/paywages-daily/${item}`);
+  };
   const [uploadedImages, setUploadedImages] = useState([]);
 
   const handlePayment = () => {
@@ -230,12 +239,21 @@ export default function DetailProjectProgress() {
     const filterList = mergedData.filter((item) => item.check_out !== null && !item.hasOwnProperty('id'));
 
     try {
+      if (statusPenyelesaian !== '') {
+        return toast.error('Inputan Status Penyelesaian masih kosong');
+      } else if (uploadedImages.length === 0) {
+        return toast.error('Gambar harus diupload');
+      } else if (filterList.length === 0) {
+        return toast.error('Jam harus ditetapkan');
+      }
       const formData = new FormData();
 
       formData.append('tukangId', dataProject?.tukangId);
       formData.append('projectId', id);
       formData.append('total', calculateTotalUpahForAllTukangs());
       formData.append('status', 'Belum');
+      formData.append('status_penyelesaian', statusPenyelesaian);
+
       formData.append('list_time', JSON.stringify(filterList));
       [...uploadedImages].forEach((image) => {
         formData.append('list_image', image);
@@ -277,7 +295,7 @@ export default function DetailProjectProgress() {
         }}
       >
         <Grid container spacing={10}>
-          <Grid item lg={12} md={2}>
+          <Grid item lg={12} md={2} mb={3}>
             <form encType="multipart/form-data">
               <input
                 id="file-upload"
@@ -358,6 +376,63 @@ export default function DetailProjectProgress() {
               disabled
               InputLabelProps={{ shrink: true }}
             />
+          </Grid>
+          <Grid item lg={6} />
+
+          <Grid item lg={3}>
+            <FormControl fullWidth>
+              <InputLabel id="demo-simple-select-label">Status Penyelesaian</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={statusPenyelesaian}
+                label="Status Penyelesaian"
+                onChange={(e) => setStatusPenyelesaian(e.target.value)}
+              >
+                <MenuItem value={'Selesai'}>Sudah selesai</MenuItem>
+                <MenuItem value={'Belum Selesai'}>Belum selesai</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item lg={12}>
+            <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
+              HISTORY PEMBAYARAN DAN PROGRESS PEKERJAAN
+            </Typography>
+          </Grid>
+          <Grid item lg={12}>
+            <TableContainer component={Paper} sx={{ minWidth: 650, border: '1px solid #ccc' }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>No.</TableCell>
+                    <TableCell>TANGGAL PENGAJUAN</TableCell>
+                    <TableCell>TOTAL YANG SUDAH DIBAYARKAN</TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {historyPay?.map((item, idx) => (
+                    <TableRow>
+                      <TableCell width={'10%'}>
+                        <Typography>{idx + 1}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography>{moment(item.createdAt).format('DD MMMM YYYY')}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography>{currency(item.total)}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Button onClick={() => handleRincianPembayaran(item.id)} color="color" variant="contained">
+                          Lihat Rincian
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Grid>
           <Grid item lg={12}>
             <Grid container spacing={3}>

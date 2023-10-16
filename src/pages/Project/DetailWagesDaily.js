@@ -39,6 +39,7 @@ export default function DetailProjectProgress() {
   const [totalUpahPerTukang, setTotalUpahPerTukang] = useState({});
   const [addedTimeEntries, setAddedTimeEntries] = useState({});
   const [comments, setComments] = useState('');
+
   const getProgress = async () => {
     try {
       const response = await Axios.get(`/pay/pay-daily/${id}`);
@@ -58,7 +59,7 @@ export default function DetailProjectProgress() {
 
   const getHistoryPay = async () => {
     try {
-      const response = await Axios.get(`/pay/history/${id}`);
+      const response = await Axios.get(`/pay/history/${dataProject?.projectId}`);
       if (response.data.message == 'OK') {
         const data = response.data;
         setHistoryPay(data);
@@ -82,7 +83,7 @@ export default function DetailProjectProgress() {
   const handleHitunganUpah = (check_in, tukangId) => {
     const checkIn = moment(check_in);
     const checkInHour = checkIn.hours();
-    const hourlyRate = parseFloat(dataProject?.list_tukang?.find((tukang) => tukang.id === tukangId)?.upah || 0);
+    const hourlyRate = dataProject?.list_tukang?.find((tukang) => tukang.id === tukangId)?.upah_tukangs[0]?.upah || 0;
     let paymentForEntry;
 
     if (checkInHour >= 12) {
@@ -96,7 +97,8 @@ export default function DetailProjectProgress() {
 
   const handleTotalUpah = (tukangId) => {
     const tukangTimeEntries = tukangTimes[tukangId] || [];
-    const hourlyRate = parseFloat(dataProject?.list_tukang?.find((tukang) => tukang.id === tukangId)?.upah || 0);
+    const hourlyRate = dataProject?.list_tukang?.find((tukang) => tukang.id === tukangId)?.upah_tukangs[0]?.upah || 0;
+    console.log(tukangTimeEntries, hourlyRate);
     const totalUpah = tukangTimeEntries.reduce((acc, timeEntry) => {
       const checkIn = moment(timeEntry.check_in);
       const checkInHour = checkIn.hours();
@@ -137,7 +139,7 @@ export default function DetailProjectProgress() {
     const roles = dataUser?.roles;
 
     const body = {
-      comments: 'BLABLABLA',
+      comments: comments,
       approvalType:
         roles === 'Project Manager'
           ? 'Admin Project'
@@ -161,6 +163,10 @@ export default function DetailProjectProgress() {
       });
     console.log(body);
   };
+
+  const handlePayed = () => {};
+  const handleRemainingPayment = () => {};
+
   return (
     <>
       <Helmet>
@@ -224,7 +230,13 @@ export default function DetailProjectProgress() {
                       <TextField id="outlined" label="Nama Tukang" size="large" value={item?.nama_tukang} disabled />
                     </Grid>
                     <Grid item lg={6}>
-                      <TextField id="outlined" label="Upah Tukang" size="large" value={currency(item?.upah)} disabled />
+                      <TextField
+                        id="outlined"
+                        label="Upah Tukang"
+                        size="large"
+                        value={currency(item?.upah_tukangs[0]?.upah)}
+                        disabled
+                      />
                     </Grid>
                   </Grid>
                   <Divider
@@ -349,7 +361,7 @@ export default function DetailProjectProgress() {
           </Grid>
           <Grid item lg={2} sx={{ py: 2 }}>
             <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
-              Rp. {currency(200000000000)}
+              Rp. {currency(handlePayed())}
             </Typography>
           </Grid>
           <Grid item lg={3} />
@@ -361,14 +373,14 @@ export default function DetailProjectProgress() {
           </Grid>
           <Grid item lg={2} sx={{ py: 2 }}>
             <Typography variant="p" component="p" sx={{ color: '#000000', fontSize: 20 }}>
-              Rp. {currency(200000000000)}
+              Rp. {currency(handleRemainingPayment())}
             </Typography>
           </Grid>
           <Grid item lg={5} />
           <Grid item lg={5} />
           <Grid item lg={2} sx={{ py: 2 }}>
             <Button variant="contained" color="color" size="large" fullWidth onClick={handlePayment}>
-              AJUKAN PEMBAYARAN
+              APPROVE
             </Button>
           </Grid>
         </Grid>

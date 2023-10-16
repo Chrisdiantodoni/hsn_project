@@ -4,13 +4,9 @@ import { Link, useParams } from 'react-router-dom';
 // @mui
 import moment from 'moment';
 import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
 import { useTheme, styled } from '@mui/material/styles';
-import IconButton from '@mui/material/IconButton';
-import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Grid,
-  Container,
   Typography,
   Paper,
   TableRow,
@@ -20,11 +16,9 @@ import {
   TableContainer,
   TableBody,
   Box,
-  Divider,
   Stack,
 } from '@mui/material';
 import { toast } from 'react-toastify';
-import { DatePicker, TimePicker, MobileTimePicker } from '@mui/x-date-pickers';
 import { Axios, currency } from 'src/utils';
 import { Button } from '@mui/material';
 
@@ -43,6 +37,8 @@ export default function DetailProjectProgress() {
   const [historyPay, setHistoryPay] = useState([]);
   const [percentageArray, setPercentageArray] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [comment, setComment] = useState('');
+  const roles = JSON.parse(localStorage.getItem('dataUser'))?.roles;
   const getProgress = async () => {
     try {
       const response = await Axios.get(`/pay/pay-weekly/${id}`);
@@ -115,7 +111,7 @@ export default function DetailProjectProgress() {
     const roles = dataUser?.roles;
 
     const body = {
-      comments: 'BLABLABLA',
+      comments: comment,
       approvalType:
         roles === 'Project Manager'
           ? 'Admin Project'
@@ -148,8 +144,7 @@ export default function DetailProjectProgress() {
     let totalPaid = 0;
 
     historyPay.forEach((item, idx) => {
-      const payment = calculateTotalPaymentByIndex(idx);
-      totalPaid += payment;
+      totalPaid += item.total;
     });
 
     return totalPaid;
@@ -316,6 +311,17 @@ export default function DetailProjectProgress() {
                 </Table>
               </TableContainer>
             </Grid>
+            <Grid item lg={12}>
+              <TextField
+                id="outlined"
+                label="Comments"
+                size="large"
+                fullWidth
+                value={comment}
+                onChange={(event) => setComment(event.target.value)}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
             <Grid item lg={6}>
               <TableContainer component={Paper} sx={{ border: '1px solid #ccc' }}>
                 <Table>
@@ -373,11 +379,25 @@ export default function DetailProjectProgress() {
             </Grid>
             <Grid item lg={5} />
             <Grid item lg={5} />
-            <Grid item lg={2} sx={{ py: 2 }}>
-              <Button variant="contained" color="color" size="large" fullWidth onClick={handlePayment}>
-                APPROVE
-              </Button>
-            </Grid>
+            {dataProject?.status === 'belum' && roles === 'Admin' ? (
+              <Grid item lg={2} sx={{ py: 2 }}>
+                <Button variant="contained" color="color" size="large" fullWidth onClick={handlePayment}>
+                  APPROVE
+                </Button>
+              </Grid>
+            ) : dataProject?.status === 'belum' && roles === 'Accounting' ? (
+              <Grid item lg={2} sx={{ py: 2 }}>
+                <Button variant="contained" color="color" size="large" fullWidth onClick={handlePayment}>
+                  APPROVE
+                </Button>
+              </Grid>
+            ) : dataProject?.status === 'belum' && roles === 'Finance' ? (
+              <Grid item lg={2} sx={{ py: 2 }}>
+                <Button variant="contained" color="color" size="large" fullWidth onClick={handlePayment}>
+                  APPROVE
+                </Button>
+              </Grid>
+            ) : null}
           </Grid>
         </Stack>
       </Box>
