@@ -27,7 +27,7 @@ import { Axios, currency } from 'src/utils';
 const ModalCheckTukang = ({ onClick, id, onSelectedItems, selectedItems }) => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const debouncedValue = useDebounce(search, 1000);
+  const debouncedValue = useDebounce(search, 500);
   const [data, setData] = useState([]);
   const [selectedRows, setSelectedRows] = useState(selectedItems);
   const [addModal, setAddModal] = useState(false);

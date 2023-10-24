@@ -28,7 +28,7 @@ import ModalAddNewSupplier from './AddNewSupplier';
 const ModalCheckSupplier = ({ onClick, id, onSelectedItems }) => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const debouncedValue = useDebounce(search, 1000);
+  const debouncedValue = useDebounce(search, 500);
   const [data, setData] = useState([]);
   const [showSupplier, setShowSupplier] = useState(false);
   useEffect(() => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
-import { BrowserRouter as Router, Route, Switch, useLocation, useParams, NavLink, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, NavLink, useNavigate } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import MuiDrawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
@@ -13,25 +13,19 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import ListSubheader from '@mui/material/ListSubheader';
 import {
   Handyman,
   PublishedWithChanges,
-  QueryBuilder,
   Inventory,
-  Summarize,
   AccountCircle,
   LocalShipping,
   Paid,
   Engineering,
 } from '@mui/icons-material';
-import AssignmentIcon from '@mui/icons-material/Assignment';
 import { useAuth } from '../../../context/AuthContext';
-import { useMyContext } from '../../../context/PageContext';
 
 const drawerWidth = 240;
 
@@ -78,6 +72,7 @@ const AppBar = styled(MuiAppBar, {
     }),
   }),
 }));
+
 const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(({ theme, open }) => ({
   width: drawerWidth,
   flexShrink: 0,
@@ -93,13 +88,6 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
   }),
 }));
 
-const DrawerHeader = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'flex-end',
-  padding: theme.spacing(0, 1),
-  ...theme.mixins.toolbar,
-}));
 const defaultTheme = createTheme();
 
 export default function Dashboard() {
@@ -171,14 +159,7 @@ export default function Dashboard() {
           <ListItemText primary="Pembayaran Upah" />
         </ListItemButton>
       </NavLink>
-      {/* <NavLink to="/dashboard/Application" style={{ textDecoration: 'none', color: '#000' }}>
-        <ListItemButton>
-          <ListItemIcon>
-            <QueryBuilder />
-          </ListItemIcon>
-          <ListItemText primary="Absensi" />
-        </ListItemButton>
-      </NavLink> */}
+
       <NavLink to="/dashboard/tukang" style={{ textDecoration: 'none', color: '#000' }}>
         <ListItemButton>
           <ListItemIcon>
@@ -214,47 +195,96 @@ export default function Dashboard() {
     </>
   );
 
-  // const approverNavItems = (
-  //   <>
-  //     <ListItemButton LinkComponent={'link'} to="/dashboard/app">
-  //       <ListItemIcon>
-  //         <DashboardIcon />
-  //       </ListItemIcon>
-  //       <ListItemText primary="Staff" />
-  //     </ListItemButton>
-  //     <ListItemButton LinkComponent={'link'} to="/dashboard/products">
-  //       <ListItemIcon>
-  //         <AssignmentIcon />
-  //       </ListItemIcon>
-  //       <ListItemText primary="Pengajuan Lembur" />
-  //     </ListItemButton>
-  //   </>
-  // );
-  // const requesterNavItems = (
-  //   <>
-  //     <ListItemButton LinkComponent={'link'} to="/dashboard/app">
-  //       <ListItemIcon>
-  //         <DashboardIcon />
-  //       </ListItemIcon>
-  //       <ListItemText primary="Staff" />
-  //     </ListItemButton>
-  //     <ListItemButton LinkComponent={'link'} to="/dashboard/products">
-  //       <ListItemIcon>
-  //         <AssignmentIcon />
-  //       </ListItemIcon>
-  //       <ListItemText primary="Pengajuan Lembur" />
-  //     </ListItemButton>
-  //   </>
-  // );
+  const accountingNavItems = (
+    <>
+      <NavLink to="/dashboard/app" style={{ textDecoration: 'none', color: '#000' }}>
+        <ListItemButton>
+          <ListItemIcon>
+            <Handyman />
+          </ListItemIcon>
+          <ListItemText primary="List Project" />
+        </ListItemButton>
+      </NavLink>
+    </>
+  );
+  const projectManagerNavItems = (
+    <>
+      <NavLink to="/dashboard/app" style={{ textDecoration: 'none', color: '#000' }}>
+        <ListItemButton>
+          <ListItemIcon>
+            <Handyman />
+          </ListItemIcon>
+          <ListItemText primary="List Project" />
+        </ListItemButton>
+      </NavLink>
+    </>
+  );
+  const ownerNavItems = (
+    <>
+      <NavLink to="/dashboard/app" style={{ textDecoration: 'none', color: '#000' }}>
+        <ListItemButton>
+          <ListItemIcon>
+            <Handyman />
+          </ListItemIcon>
+          <ListItemText primary="List Project" />
+        </ListItemButton>
+      </NavLink>
+    </>
+  );
+  const financeNavItems = (
+    <>
+      <NavLink to="/dashboard/app" style={{ textDecoration: 'none', color: '#000' }}>
+        <ListItemButton>
+          <ListItemIcon>
+            <Handyman />
+          </ListItemIcon>
+          <ListItemText primary="List Project" />
+        </ListItemButton>
+      </NavLink>
+    </>
+  );
+  const pembelianNavItems = (
+    <>
+      <NavLink to="/dashboard/app" style={{ textDecoration: 'none', color: '#000' }}>
+        <ListItemButton>
+          <ListItemIcon>
+            <Handyman />
+          </ListItemIcon>
+          <ListItemText primary="List Project" />
+        </ListItemButton>
+      </NavLink>
+    </>
+  );
+
+  const adminProjectNavItems = (
+    <>
+      <NavLink to="/dashboard/app" style={{ textDecoration: 'none', color: '#000' }}>
+        <ListItemButton>
+          <ListItemIcon>
+            <Handyman />
+          </ListItemIcon>
+          <ListItemText primary="List Project" />
+        </ListItemButton>
+      </NavLink>
+    </>
+  );
 
   const renderNavItems = () => {
     switch (userRole) {
       case 'Admin':
         return adminNavItems;
-      // case 'approver':
-      //   return approverNavItems;
-      // case 'requester':
-      //   return requesterNavItems;
+      case 'Accounting':
+        return accountingNavItems;
+      case 'Project Manager':
+        return projectManagerNavItems;
+      case 'Owner':
+        return ownerNavItems;
+      case 'Finance':
+        return financeNavItems;
+      case 'Pembelian':
+        return pembelianNavItems;
+      case 'Admin Project':
+        return adminProjectNavItems;
       default:
         return null;
     }

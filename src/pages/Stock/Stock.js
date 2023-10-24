@@ -42,7 +42,7 @@ export default function Stock() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const debouncedValue = useDebounce(search, 1000);
+  const debouncedValue = useDebounce(search, 500);
 
   useEffect(() => {
     setDebouncedSearch(debouncedValue);

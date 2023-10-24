@@ -86,7 +86,7 @@ export default function DetailProjectProgress() {
       const itemHarga =
         dataProject?.status_penyelesaian === 'Belum selesai'
           ? item.harga * item.qty * (percentage / 100)
-          : item.harga * item.qty * percentage;
+          : item.harga * item.qty * (percentage / 100);
       return total + itemHarga;
     }, 0);
 
@@ -422,7 +422,7 @@ export default function DetailProjectProgress() {
                             label={'%PROGRESS'}
                             type="number"
                             value={
-                              dataProject?.status_penyelesaian === 'Belum selesai'
+                              dataProject?.status_penyelesaian === 'Belum Selesai'
                                 ? percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage ||
                                   ''
                                 : 100
@@ -435,7 +435,7 @@ export default function DetailProjectProgress() {
                                 handlePercentageChange(item.id, '');
                               }
                             }}
-                            disabled={dataProject?.status_penyelesaian === 'Belum selesai' ? false : true}
+                            disabled={dataProject?.status_penyelesaian === 'Belum Selesai' ? false : true}
                           ></TextField>
                         </Typography>
                       </TableCell>
@@ -448,7 +448,7 @@ export default function DetailProjectProgress() {
                           value={item.qty}
                           onChange={(e) => handleQtyChange(e, idx)}
                           label="Qty"
-                          disabled={dataProject?.status_penyelesaian === 'Belum selesai' ? false : true}
+                          disabled={dataProject?.status_penyelesaian === 'Belum Selesai' ? false : true}
                         />
                       </TableCell>
                       <TableCell>
@@ -457,7 +457,7 @@ export default function DetailProjectProgress() {
                           value={item.harga}
                           onChange={(e) => handleHargaChange(e, idx)}
                           label="Harga"
-                          disabled={dataProject?.status_penyelesaian === 'Belum selesai' ? false : true}
+                          disabled={dataProject?.status_penyelesaian === 'Belum Selesai' ? false : true}
                         />
                       </TableCell>
                       <TableCell>
@@ -475,7 +475,7 @@ export default function DetailProjectProgress() {
                           {currency(
                             item.harga *
                               item.qty *
-                              (dataProject?.status_penyelesaian === 'Belum selesai'
+                              (dataProject?.status_penyelesaian === 'Belum Selesai'
                                 ? percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage /
                                   100
                                 : percentageArray.find((percentageObj) => percentageObj.id === item.id)?.percentage)

@@ -37,7 +37,7 @@ export default function LoginForm() {
     try {
       e.preventDefault();
       const response = await Axios.post('/auth/login', body);
-      if (response.data.message === 'OK') {
+      if (response.data.message === '200' || response.data.reset_password === null || false) {
         const token = response.data?.data?.token;
         const refreshToken = response.data.data.refreshToken;
         const dataUser = response.data.data.data;
@@ -55,6 +55,10 @@ export default function LoginForm() {
         });
         toast.success('Berhasil Login');
         navigate('/dashboard/app');
+      } else {
+        const dataUser = response?.data?.data?.data;
+        console.log(dataUser);
+        navigate('/change-password', { state: { userId: dataUser.id } });
       }
     } catch (error) {
       toast.error('Email atau Password Salah');

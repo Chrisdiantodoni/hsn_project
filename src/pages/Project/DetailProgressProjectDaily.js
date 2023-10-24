@@ -231,6 +231,8 @@ export default function DetailProjectProgress() {
   };
   const [uploadedImages, setUploadedImages] = useState([]);
 
+  console.log(statusPenyelesaian);
+
   const handlePayment = () => {
     const mergedData = Object.values(tukangTimes).reduce((mergedArray, timeEntries) => {
       const filteredTimeEntries = timeEntries.filter((entry) => entry && entry.id !== null);
@@ -239,7 +241,7 @@ export default function DetailProjectProgress() {
     const filterList = mergedData.filter((item) => item.check_out !== null && !item.hasOwnProperty('id'));
 
     try {
-      if (statusPenyelesaian !== '') {
+      if (statusPenyelesaian === '') {
         return toast.error('Inputan Status Penyelesaian masih kosong');
       } else if (uploadedImages.length === 0) {
         return toast.error('Gambar harus diupload');

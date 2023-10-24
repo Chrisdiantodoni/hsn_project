@@ -28,7 +28,7 @@ import Search from '@mui/icons-material/Search';
 import 'rsuite/dist/rsuite.css';
 import { Button, DatePicker, ModalAddNewUser, ModalComponent, ModalEditUser } from '../../components';
 import { Axios } from 'src/utils';
-import { useQuery } from '@tanstack/react-query';
+import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUser } from 'src/API/auth';
 // components
 
@@ -42,7 +42,7 @@ export default function UserList() {
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const debouncedValue = useDebounce(search, 1000);
+  const debouncedValue = useDebounce(search, 500);
   const pageSize = 10;
 
   const handleEditModal = (item) => {
@@ -57,6 +57,7 @@ export default function UserList() {
   const {
     isLoading,
     data: data,
+    isError,
     error,
   } = useQuery({
     queryKey: ['users', { currentPage, pageSize, debouncedSearch }],
@@ -65,6 +66,13 @@ export default function UserList() {
       return response;
     },
   });
+  if (isLoading) {
+    return <span>Loading...</span>;
+  }
+
+  if (isError) {
+    return <span>Error: {error.message}</span>;
+  }
 
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
@@ -149,7 +157,7 @@ export default function UserList() {
           <ModalAddNewUser onClick={() => setIsAddModalOpen(false)} />
         </ModalComponent>
         <ModalComponent open={isEditModalOpen} close={() => setIsEditModalOpen(false)} title={`Edit User ${id}`}>
-          <ModalEditUser onClick={() => setIsEditModalOpen(false)} />
+          <ModalEditUser onClick={() => setIsEditModalOpen(false)} id={id} />
         </ModalComponent>
       </Container>
     </>

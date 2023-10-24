@@ -48,7 +48,7 @@ export default function ProjectPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const debouncedValue = useDebounce(search, 1000);
+  const debouncedValue = useDebounce(search, 500);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
 
@@ -181,7 +181,13 @@ export default function ProjectPage() {
             </Grid>
             <Grid item xs={12} sm={6} md={3} lg={4}>
               <FormControl variant="outlined" sx={{ width: '100%' }}>
-                <InputLabel>Cari Nama Project</InputLabel>
+                <InputLabel
+                  sx={{
+                    paddingRight: 5,
+                  }}
+                >
+                  Cari Nama Project
+                </InputLabel>
                 <OutlinedInput
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}

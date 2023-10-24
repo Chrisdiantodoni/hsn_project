@@ -35,15 +35,13 @@ import 'react-toastify/dist/ReactToastify.css';
 // ----------------------------------------------------------------------
 
 export default function ProjectPage() {
-  const [id, setId] = useState('');
   const [search, setSearch] = useState('');
-  const [selectedOption, setSelectedOption] = useState('');
 
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const debouncedValue = useDebounce(search, 1000);
+  const debouncedValue = useDebounce(search, 500);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
 
@@ -65,6 +63,7 @@ export default function ProjectPage() {
       return response;
     },
   });
+  if (isLoading) return <div>Loading....</div>;
 
   if (error) return <div>An error occurred: {error.message}</div>;
 
@@ -126,7 +125,7 @@ export default function ProjectPage() {
           </TableContainer>
 
           <Grid container spacing={3} sx={{ alignItems: 'center', mb: 3, alignContent: 'center' }}>
-            <Grid item xs={12} sm={6} md={3} lg={4}>
+            <Grid item xs={12} sm={6} md={3} lg={3}>
               <DatePicker
                 size="lg"
                 label="Dari"
@@ -136,7 +135,7 @@ export default function ProjectPage() {
                 renderInput={(params) => <TextField {...params} />}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3} lg={4}>
+            <Grid item xs={12} sm={6} md={3} lg={3}>
               <DatePicker
                 size="lg"
                 label="Sampai"
@@ -146,9 +145,15 @@ export default function ProjectPage() {
                 renderInput={(params) => <TextField {...params} />}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3} lg={4}>
+            <Grid item xs={12} sm={6} md={3} lg={6}>
               <FormControl variant="outlined" sx={{ width: '100%' }}>
-                <InputLabel>Cari Nama Project</InputLabel>
+                <InputLabel
+                  sx={{
+                    paddingRight: 5,
+                  }}
+                >
+                  Cari Nama Project
+                </InputLabel>
                 <OutlinedInput
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}

@@ -52,6 +52,9 @@ export default function AddNewApplication() {
   const [selectedImages, setSelectedImages] = useState([]);
   const [listTukang, setListTukang] = useState([]);
   const [allStock, setAllStock] = useState([]);
+  const [stockError, setStockError] = useState(false);
+  const [jobError, setJobError] = useState(false);
+
   const handleImageChange = (event) => {
     const files = event.target.files;
     setSelectedImages((prev) => [...prev, ...files]);
@@ -75,7 +78,7 @@ export default function AddNewApplication() {
   const handleSelectedTukang = (selectedItems) => {
     setListTukang((prev) => [...prev, ...selectedItems]);
   };
-  const [newRowData, setNewRowData] = useState({
+  const [newSupplierRow, setNewSupplierRow] = useState({
     id: '',
     nama_barang: '',
     supplier: '',
@@ -84,19 +87,38 @@ export default function AddNewApplication() {
   });
 
   const handleAddRow = () => {
+    if (!newSupplierRow.harga) {
+      toast.error('barang tidak boleh kosong');
+      setStockError(true);
+      return;
+    } else if (!newSupplierRow.nama_barang) {
+      toast.error('barang tidak boleh kosong');
+      setStockError(true);
+      return;
+    } else if (!newSupplierRow.supplier) {
+      toast.error('barang tidak boleh kosong');
+      setStockError(true);
+      return;
+    } else if (!newSupplierRow.qty) {
+      toast.error('barang tidak boleh kosong');
+      setStockError(true);
+      return;
+    }
+    setStockError(false);
+
     const randomId = generateRandomId(2);
 
     const newRow = {
       id: randomId,
-      nama_barang: newRowData.nama_barang,
-      supplier: newRowData.supplier,
-      qty: parseInt(newRowData.qty),
-      harga: parseInt(newRowData.harga),
+      nama_barang: newSupplierRow.nama_barang,
+      supplier: newSupplierRow.supplier,
+      qty: parseInt(newSupplierRow.qty),
+      harga: parseInt(newSupplierRow.harga),
     };
 
     setSelectedCards([...selectedCards, newRow]);
 
-    setNewRowData({
+    setNewSupplierRow({
       id: '',
       nama_barang: '',
       supplier: '',
@@ -125,6 +147,12 @@ export default function AddNewApplication() {
   }
 
   const handleAddJobRow = () => {
+    if (!newJobRow.name) {
+      setJobError(true);
+      toast.error('Job tidak boleh kosong');
+      return;
+    }
+    setJobError(false);
     const randomId = generateRandomId(2);
 
     setListJob([...listJob, newJobRow]);
@@ -146,7 +174,7 @@ export default function AddNewApplication() {
     });
   };
   const handleSelectedSupplier = (selectedSupplier) => {
-    setNewRowData({ ...newRowData, supplier: selectedSupplier });
+    setNewSupplierRow({ ...newSupplierRow, supplier: selectedSupplier });
   };
 
   const totalHargaStock = selectedCards.reduce((total, currentItem) => {
@@ -526,20 +554,21 @@ export default function AddNewApplication() {
                         <TextField
                           size="small"
                           fullWidth
-                          value={newRowData.nama_barang}
-                          onChange={(e) => setNewRowData({ ...newRowData, nama_barang: e.target.value })}
+                          error={stockError}
+                          value={newSupplierRow.nama_barang}
+                          onChange={(e) => setNewSupplierRow({ ...newSupplierRow, nama_barang: e.target.value })}
                         />
                       </TableCell>
                       <TableCell>
-                        {newRowData.supplier ? (
+                        {newSupplierRow.supplier ? (
                           <Grid lg={12} direction={'row'} display={'flex'}>
                             <Grid lg={9}>
                               <TextField
                                 size="small"
                                 fullWidth
                                 disabled
-                                value={newRowData.supplier.nama_supplier}
-                                onChange={(e) => setNewRowData({ ...newRowData, supplier: e.target.value })}
+                                value={newSupplierRow.supplier.nama_supplier}
+                                onChange={(e) => setNewSupplierRow({ ...newSupplierRow, supplier: e.target.value })}
                               />
                             </Grid>
                             <Grid lg={1}>
@@ -548,7 +577,7 @@ export default function AddNewApplication() {
                                 label={'X'}
                                 color={'color'}
                                 variant={'contained'}
-                                onClick={() => setNewRowData({ ...newRowData, supplier: '' })}
+                                onClick={() => setNewSupplierRow({ ...newSupplierRow, supplier: '' })}
                               />
                             </Grid>
                           </Grid>
@@ -566,20 +595,22 @@ export default function AddNewApplication() {
                         <TextField
                           size="small"
                           fullWidth
-                          value={newRowData.qty}
-                          onChange={(e) => setNewRowData({ ...newRowData, qty: e.target.value })}
+                          error={stockError}
+                          value={newSupplierRow.qty}
+                          onChange={(e) => setNewSupplierRow({ ...newSupplierRow, qty: e.target.value })}
                         />
                       </TableCell>
                       <TableCell>
                         <TextField
                           size="small"
                           fullWidth
-                          value={newRowData.harga}
-                          onChange={(e) => setNewRowData({ ...newRowData, harga: e.target.value })}
+                          error={stockError}
+                          value={newSupplierRow.harga}
+                          onChange={(e) => setNewSupplierRow({ ...newSupplierRow, harga: e.target.value })}
                         />
                       </TableCell>
                       <TableCell>
-                        <TextField size="small" fullWidth disabled value={newRowData.qty * newRowData.harga} />
+                        <TextField size="small" fullWidth disabled value={newSupplierRow.qty * newSupplierRow.harga} />
                       </TableCell>
                       <TableCell>
                         <Button variant="outlined" color="color" label={'Add'} onClick={handleAddRow}></Button>
@@ -647,6 +678,7 @@ export default function AddNewApplication() {
                         <TextField
                           size="small"
                           fullWidth
+                          error={jobError}
                           value={newJobRow.name}
                           onChange={(e) => setNewJobRow({ ...newJobRow, name: e.target.value })}
                         />
@@ -657,6 +689,7 @@ export default function AddNewApplication() {
                             <TextField
                               size="small"
                               fullWidth
+                              error={jobError}
                               value={newJobRow.qty}
                               onChange={(e) => setNewJobRow({ ...newJobRow, qty: e.target.value })}
                             />
@@ -666,6 +699,7 @@ export default function AddNewApplication() {
                             <TextField
                               size="small"
                               fullWidth
+                              error={jobError}
                               value={newJobRow.harga}
                               onChange={(e) => setNewJobRow({ ...newJobRow, harga: e.target.value })}
                             />

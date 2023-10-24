@@ -30,14 +30,6 @@ import { generatePdf } from 'src/components/pdf/pdf';
 
 // ----------------------------------------------------------------------
 
-const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
-  ...theme.typography.body2,
-  padding: theme.spacing(1),
-  textAlign: 'center',
-  color: theme.palette.text.secondary,
-}));
-
 export default function DetailProject() {
   const { id } = useParams();
   const [addModalOpen, setIsAddModalOpen] = useState(false);
@@ -61,8 +53,6 @@ export default function DetailProject() {
   const [selectedProgressImage, setSelectedProgressImage] = useState([]);
   const dataUser = JSON.parse(localStorage.getItem('dataUser'));
   const roles = dataUser?.roles;
-  console.log(roles);
-  const userId = dataUser?.id;
 
   const handleImageChange = (event) => {
     const files = event.target.files;
@@ -296,6 +286,7 @@ export default function DetailProject() {
         }
       })
       .catch((error) => {
+        console.log(error);
         toast.error('Project gagal direject');
       });
   };

@@ -37,31 +37,23 @@ import { getPay } from 'src/API';
 
 // ----------------------------------------------------------------------
 export default function ProjectPage() {
-  const [value, setValue] = useState([null, null]);
-  const navigate = useNavigate();
-  const [id, setId] = useState('');
-  const options = ['Ditolak', 'Pending', 'Disetujui'];
-  const roles = 'Approver';
+  const options = ['Sudah Dibayar', 'Belum Dibayar'];
   const [search, setSearch] = useState('');
-  const theme = useTheme();
   const [selectedOption, setSelectedOption] = useState('');
-  const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const debouncedValue = useDebounce(search, 1000);
+  const debouncedValue = useDebounce(search, 500);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   useEffect(() => {
     setDebouncedSearch(debouncedValue);
   }, [debouncedValue]);
-  let status_project = '';
-  if (selectedOption === 'Ditolak') {
-    status_project = 'reject';
-  } else if (selectedOption === 'Disetujui') {
-    status_project = 'approved';
-  } else {
-    status_project = 'request';
+  let status = '';
+  if (selectedOption === 'Sudah Dibayar') {
+    status = 'sudah';
+  } else if (selectedOption === 'Belum Dibayar') {
+    status = 'belum';
   }
 
   const start = startDate ? startDate.format('YYYY-MM-DD HH:mm:ss') : '';
@@ -72,9 +64,9 @@ export default function ProjectPage() {
     data: data,
     error,
   } = useQuery({
-    queryKey: ['pays', { debouncedSearch, currentPage, pageSize, status_project, start, end }],
+    queryKey: ['pays', { debouncedSearch, currentPage, pageSize, status, start, end }],
     queryFn: async () => {
-      const response = await getPay(debouncedSearch, currentPage, pageSize, status_project, start, end);
+      const response = await getPay(debouncedSearch, currentPage, pageSize, status, start, end);
       return response;
     },
   });
@@ -157,7 +149,7 @@ export default function ProjectPage() {
                   setSelectedOption(newValue);
                 }}
                 sx={{ width: '100%' }}
-                renderInput={(params) => <TextField {...params} label="Status Pengajuan" />}
+                renderInput={(params) => <TextField {...params} label="Status" />}
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3} lg={4}>
@@ -182,7 +174,13 @@ export default function ProjectPage() {
             </Grid>
             <Grid item xs={12} sm={6} md={3} lg={4}>
               <FormControl variant="outlined" sx={{ width: '100%' }}>
-                <InputLabel>Cari Nama Project</InputLabel>
+                <InputLabel
+                  sx={{
+                    paddingRight: 5,
+                  }}
+                >
+                  Cari Nama Project
+                </InputLabel>
                 <OutlinedInput
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}

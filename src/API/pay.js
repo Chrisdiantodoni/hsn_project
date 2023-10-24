@@ -1,8 +1,8 @@
 import { Axios } from '../utils';
 
-export const getPay = async (search, page, size, status_project, startDate, endDate) => {
+export const getPay = async (search, page, size, status, startDate, endDate) => {
   const params = {
-    status: status_project,
+    status: status,
     query: search,
     start: startDate,
     end: endDate,

@@ -38,14 +38,14 @@ function PrivateRoute({ element, allowedRoles }) {
 }
 
 export default function Router() {
-  const dataUser = JSON.parse(localStorage.getItem('dataUser'));
+  const dataUser = JSON.parse(localStorage.getItem('dataUser')) || '';
   const userRole = dataUser?.roles;
   const authenticated = !!userRole;
   console.log(authenticated, userRole);
 
   const routes = useRoutes([
     {
-      path: '/',
+      path: '/dashboard',
       element: authenticated ? <Navigate to="/dashboard/app" replace /> : <Navigate to="/login" replace />,
     },
     {
@@ -53,7 +53,7 @@ export default function Router() {
       element: authenticated ? <Navigate to="/dashboard/app" replace /> : <LoginPage />,
     },
     {
-      path: '/changepassword',
+      path: '/change-password',
       element: <ChangePasswordPage />,
     },
     {
@@ -145,10 +145,10 @@ export default function Router() {
         { path: '*', element: <Navigate to="/404" /> },
       ],
     },
-    {
-      path: '*',
-      element: <Navigate to="/404" replace />,
-    },
+    // {
+    //   path: '*',
+    //   element: <Navigate to="/404" replace />,
+    // },
   ]);
 
   return routes;

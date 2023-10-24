@@ -7,6 +7,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Iconify from '../../components/iconify';
 import { toast } from 'react-toastify';
 import { Axios } from 'src/utils';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '..';
 
 const ModalAddNewStaff = ({ onClick }) => {
@@ -17,31 +18,29 @@ const ModalAddNewStaff = ({ onClick }) => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState(null);
   const [pin, setPin] = useState('');
-  const [namaError, setNamaError] = useState(false);
-  const [emailError, setEmailError] = useState(false);
-  const [roleError, setRoleError] = useState(false);
-  const [passwordError, setPasswordError] = useState(false);
-  const [pinError, setPinError] = useState(false);
-
-  const options = ['Accounting', 'Project Manager', 'Owner', 'Finance', 'Admin'];
+  const [namaError, setNamaError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [roleError, setRoleError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [pinError, setPinError] = useState('');
+  const queryClient = useQueryClient();
+  const options = ['Accounting', 'Project Manager', 'Owner', 'Finance', 'Admin', 'Admin Project', 'Pembelian'];
 
   const handleRegister = () => {
-    // Validate the inputs
     if (!nama || !email || !password || !role || !pin) {
-      if (!nama) setNamaError(true);
-      if (!email) setEmailError(true);
-      if (!password) setPasswordError(true);
-      if (!role) setRoleError(true);
-      if (!pin) setPinError(true);
+      if (!nama) setNamaError('Nama tidak boleh kosong');
+      if (!email) setEmailError('Email tidak boleh kosong');
+      if (!password) setPasswordError('Password tidak boleh kosong');
+      if (!role) setRoleError('Role tidak boleh kosong');
+      if (!pin) setPinError('Pin tidak boleh kosong');
 
       toast.error('Ada Inputan yang belum diisi');
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setEmailError(true);
+      setEmailError('Format Email tidak valid');
       toast.error('Format Email tidak valid.');
       return;
     } else {
@@ -61,11 +60,14 @@ const ModalAddNewStaff = ({ onClick }) => {
         if (res.data.message === 'OK') {
           toast.success('User berhasil ditambahkan');
           onClick();
+          queryClient.invalidateQueries('users');
         }
       })
       .catch((res) => {
         console.error(res);
         toast.error('Gagal menambahkan user');
+        if (res.data?.data === 'Email already exists');
+        setEmailError('Email sudah terdaftar');
       });
   };
 
@@ -77,7 +79,7 @@ const ModalAddNewStaff = ({ onClick }) => {
           value={nama}
           onChange={(event) => {
             setNama(event.target.value);
-            setNamaError(false); // Reset error when input changes
+            setNamaError(false);
           }}
           id="outlined-required"
           label="Nama Lengkap"
@@ -98,7 +100,7 @@ const ModalAddNewStaff = ({ onClick }) => {
           label="Email"
           fullWidth
           error={emailError}
-          helperText={emailError ? 'Format Email tidak valid' : ''}
+          helperText={emailError}
         />
       </Grid>
 
