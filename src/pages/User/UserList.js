@@ -30,6 +30,7 @@ import { Button, DatePicker, ModalAddNewUser, ModalComponent, ModalEditUser } fr
 import { Axios } from 'src/utils';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUser } from 'src/API/auth';
+import TemporaryPasswordModal from 'src/components/ModalComponent/TemporaryPassword';
 // components
 
 // ----------------------------------------------------------------------
@@ -44,6 +45,9 @@ export default function UserList() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const debouncedValue = useDebounce(search, 500);
   const pageSize = 10;
+  const [temporaryPasswordInfo, setTemporaryPasswordInfo] = useState({});
+  const [showTemporaryPasswordModal, setShowTemporaryPasswordModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState(null);
 
   const handleEditModal = (item) => {
     setId(item.id);
@@ -154,10 +158,32 @@ export default function UserList() {
           </Grid>
         </Stack>
         <ModalComponent open={isAddModalOpen} close={() => setIsAddModalOpen(false)} title={'Tambah User'}>
-          <ModalAddNewUser onClick={() => setIsAddModalOpen(false)} />
+          <ModalAddNewUser
+            onClick={() => setIsAddModalOpen(false)}
+            onSuccessCallback={(data) => {
+              setModalTitle('User Ditambahkan');
+              setShowTemporaryPasswordModal(true);
+              setTemporaryPasswordInfo(data);
+            }}
+          />
         </ModalComponent>
         <ModalComponent open={isEditModalOpen} close={() => setIsEditModalOpen(false)} title={`Edit User ${id}`}>
-          <ModalEditUser onClick={() => setIsEditModalOpen(false)} id={id} />
+          <ModalEditUser
+            onClick={() => setIsEditModalOpen(false)}
+            onSuccessCallback={(data) => {
+              setModalTitle('Reset Password Berhasil');
+              setShowTemporaryPasswordModal(true);
+              setTemporaryPasswordInfo(data);
+            }}
+            id={id}
+          />
+        </ModalComponent>
+        <ModalComponent
+          open={showTemporaryPasswordModal}
+          close={() => setShowTemporaryPasswordModal(false)}
+          title={modalTitle}
+        >
+          <TemporaryPasswordModal onClick={() => setShowTemporaryPasswordModal(false)} item={temporaryPasswordInfo} />
         </ModalComponent>
       </Container>
     </>

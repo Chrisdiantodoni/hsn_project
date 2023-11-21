@@ -335,11 +335,11 @@ export default function Dashboard() {
               }}
             >
               <Typography component="h1" variant="h6" color="inherit">
-                {dataUser.nama_lengkap}
+                {dataUser?.nama_lengkap}
               </Typography>
               {open ? (
                 <Typography component="h1" variant="h6" color="inherit">
-                  {dataUser.roles}
+                  {dataUser?.roles}
                 </Typography>
               ) : null}
             </Box>

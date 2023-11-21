@@ -41,20 +41,19 @@ export default function Router() {
   const dataUser = JSON.parse(localStorage.getItem('dataUser')) || '';
   const userRole = dataUser?.roles;
   const authenticated = !!userRole;
-  console.log(authenticated, userRole);
 
   const routes = useRoutes([
     {
-      path: '/dashboard',
-      element: authenticated ? <Navigate to="/dashboard/app" replace /> : <Navigate to="/login" replace />,
-    },
-    {
       path: '/login',
-      element: authenticated ? <Navigate to="/dashboard/app" replace /> : <LoginPage />,
+      element: authenticated ? <DashboardLayout /> : <LoginPage />,
     },
     {
       path: '/change-password',
       element: <ChangePasswordPage />,
+    },
+    {
+      path: '/dashboard',
+      element: authenticated ? <Navigate to="/dashboard/app" replace /> : <Navigate to="/login" replace />,
     },
     {
       path: '/dashboard',
@@ -139,16 +138,16 @@ export default function Router() {
     {
       element: <SimpleLayout />,
       children: [
-        { element: authenticated ? <Navigate to="/dashboard/app" replace /> : <Navigate to="/login" replace /> },
+        { element: <Navigate to="/login" />, index: true },
         { path: '404', element: <Page404 /> },
         { path: '403', element: <Page403 /> },
         { path: '*', element: <Navigate to="/404" /> },
       ],
     },
-    // {
-    //   path: '*',
-    //   element: <Navigate to="/404" replace />,
-    // },
+    {
+      path: '*',
+      element: <Navigate to="/404" replace />,
+    },
   ]);
 
   return routes;

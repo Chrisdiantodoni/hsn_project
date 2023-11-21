@@ -37,7 +37,9 @@ export default function LoginForm() {
     try {
       e.preventDefault();
       const response = await Axios.post('/auth/login', body);
-      if (response.data.message === '200' || response.data.reset_password === null || false) {
+      console.log(response);
+      if (response.data.message === 'OK' || response.data.reset_password === null || false) {
+        toast.success('Berhasil');
         const token = response.data?.data?.token;
         const refreshToken = response.data.data.refreshToken;
         const dataUser = response.data.data.data;
@@ -56,7 +58,7 @@ export default function LoginForm() {
         toast.success('Berhasil Login');
         navigate('/dashboard/app');
       } else {
-        const dataUser = response?.data?.data?.data;
+        const dataUser = response?.data?.data;
         console.log(dataUser);
         navigate('/change-password', { state: { userId: dataUser.id } });
       }

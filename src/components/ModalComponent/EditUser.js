@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 import { useForm, Controller } from 'react-hook-form';
-import { Grid, InputLabel, FormControl, Select, MenuItem } from '@mui/material';
-import { Card, Dropdown, TextInput, Button, ModalComponent } from '..';
+import { Grid } from '@mui/material';
+import { Button } from '..';
 import { editUser, getUserDetail, resetPassword } from 'src/API/auth';
+import { toast } from 'react-toastify';
+import copy from 'clipboard-copy';
 
 const ModalEditUser = ({ onClick, id }) => {
   const { handleSubmit, register, control } = useForm();
@@ -23,7 +25,19 @@ const ModalEditUser = ({ onClick, id }) => {
 
   const mutationResetPassword = useMutation({
     mutationFn: async (id) => {
-      resetPassword(id);
+      const result = await resetPassword(id);
+      return result;
+    },
+    onSuccess: async (data) => {
+      query.invalidateQueries({
+        queryKey: ['users'],
+      });
+      toast.success('Password berhasil direset');
+      await copy(data?.data?.password);
+      onClick();
+    },
+    onError: () => {
+      toast.error('Password Gagal direset');
     },
   });
 
@@ -35,7 +49,11 @@ const ModalEditUser = ({ onClick, id }) => {
       query.invalidateQueries({
         queryKey: ['users'],
       });
+      toast.success('User berhasil diedit');
       onClick();
+    },
+    onError: () => {
+      toast.error('User gagal diedit');
     },
   });
 
