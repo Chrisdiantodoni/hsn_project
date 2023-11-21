@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/static/css/main.533877de.css",
+    "main.js": "/static/js/main.fa1fce39.js",
+    "static/js/496.c8bc0447.chunk.js": "/static/js/496.c8bc0447.chunk.js",
+    "static/media/HOKITO.png": "/static/media/HOKITO.cb3f0af037919084c46f.png",
+    "index.html": "/index.html",
+    "main.533877de.css.map": "/static/css/main.533877de.css.map",
+    "main.fa1fce39.js.map": "/static/js/main.fa1fce39.js.map",
+    "496.c8bc0447.chunk.js.map": "/static/js/496.c8bc0447.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.533877de.css",
+    "static/js/main.fa1fce39.js"
+  ]
+}
